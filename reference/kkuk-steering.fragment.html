@@ -1,0 +1,167 @@
+<div id="kkuk-steering">
+<style>
+#kkuk-steering{color-scheme:light dark;--bg:light-dark(#f5f0e7,#111c29);--ink:light-dark(#202d37,#eef1ed);--muted:light-dark(#627079,#a7b5c1);--wall:light-dark(#2f4858,#738b9c);--edge:light-dark(#527382,#a5c0ca);--mint:light-dark(#087f70,#73e4c1);--body:light-dark(#fa7960,#ff967e);--danger:light-dark(#bb3635,#ff7974);--panel:light-dark(#fffdf7,#1a2938);--track:light-dark(#dddcd2,#344655);width:100%;max-width:400px;margin:auto;color:var(--ink);font:400 14px/1.5 system-ui,sans-serif;user-select:none;-webkit-user-select:none;}
+#kkuk-steering *{box-sizing:border-box}
+#kkuk-steering button{font:inherit;color:var(--ink);min-height:44px;touch-action:manipulation}
+#kkuk-steering .kk-top{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 2px 12px}
+#kkuk-steering .kk-title{font-size:25px;font-weight:700;letter-spacing:-1px}
+#kkuk-steering .kk-best{color:var(--muted);font-size:12px;text-align:right}
+#kkuk-steering .kk-game{position:relative;border-radius:22px;overflow:hidden;background:var(--bg);border:1px solid var(--track)}
+#kkuk-steering canvas{display:block;width:100%;height:auto;aspect-ratio:360/430;touch-action:none}
+#kkuk-steering .kk-hud{position:absolute;top:13px;left:17px;right:17px;display:flex;align-items:start;justify-content:space-between;pointer-events:none}
+#kkuk-steering .kk-score{font-size:25px;font-weight:650;line-height:1.1;font-variant-numeric:tabular-nums}
+#kkuk-steering .kk-caption{color:var(--muted);font-size:12px}
+#kkuk-steering .kk-pause{pointer-events:auto;background:var(--panel);border:1px solid var(--track);border-radius:12px;padding:8px 12px}
+#kkuk-steering .kk-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:color-mix(in srgb,var(--bg) 75%,transparent)}
+#kkuk-steering .kk-overlay[hidden]{display:none}
+#kkuk-steering .kk-dialog{width:100%;max-width:275px;padding:24px 20px;border-radius:22px;background:var(--panel);text-align:center;box-shadow:0 10px 35px color-mix(in srgb,var(--ink) 10%,transparent)}
+#kkuk-steering .kk-dialog-title{font-size:26px;font-weight:700;margin-bottom:8px}
+#kkuk-steering .kk-dialog-detail{color:var(--muted);margin-bottom:18px;white-space:pre-line;min-height:40px}
+#kkuk-steering .kk-main{width:100%;border:0;border-radius:12px;background:var(--ink);color:var(--panel);padding:12px}
+#kkuk-steering .kk-pressure{display:flex;justify-content:space-between;gap:12px;margin:12px 3px 5px;font-size:12px;color:var(--muted)}
+#kkuk-steering .kk-track{height:7px;overflow:hidden;border-radius:5px;background:var(--track)}
+#kkuk-steering .kk-fill{height:100%;width:0;background:var(--mint)}
+#kkuk-steering .kk-hold{width:100%;min-height:66px;margin-top:12px;border:0;border-radius:17px;background:var(--ink);color:var(--panel);font-size:19px;font-weight:650;touch-action:none;-webkit-touch-callout:none}
+#kkuk-steering .kk-hold[aria-pressed=true]{background:var(--mint);color:var(--panel);transform:translateY(2px)}
+#kkuk-steering .kk-note{margin-top:9px;min-height:21px;font-size:12px;color:var(--muted);text-align:center}
+#kkuk-steering .kk-palette{position:absolute;width:0;height:0;overflow:hidden;pointer-events:none}
+</style>
+<div class="kk-top"><span class="kk-title">꾹!</span><div class="kk-best">이 창의 최고 기록<br><span id="kk-best-value">0 m</span></div></div>
+<div class="kk-game">
+ <canvas id="kk-canvas" width="720" height="860" role="img" aria-label="누른 채 좌우로 드래그해 생물을 이동하고 압축하여 틈을 통과하는 게임"></canvas>
+ <div class="kk-hud"><div><div class="kk-score" id="kk-height">0 m</div><div class="kk-caption" id="kk-gates">0개 통과</div></div><button type="button" class="kk-pause cursor-interaction" id="kk-pause" aria-label="일시정지">일시정지</button></div>
+ <div class="kk-overlay" id="kk-overlay"><div class="kk-dialog"><div class="kk-dialog-title" id="kk-dialog-title">이제 좌우로!</div><div class="kk-dialog-detail" id="kk-dialog-detail">누른 채 드래그 → 이동 + 압축
+손을 떼면 반동</div><button type="button" class="kk-main cursor-interaction" id="kk-start">시작하기</button></div></div>
+</div>
+<div class="kk-pressure"><span id="kk-state">압축 에너지</span><span id="kk-percent">0%</span></div>
+<div class="kk-track" role="progressbar" aria-label="압축 에너지" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" id="kk-meter"><div class="kk-fill" id="kk-fill"></div></div>
+<button type="button" class="kk-hold cursor-interaction" id="kk-hold" aria-pressed="false">누른 채 좌우로 드래그</button>
+<div class="kk-note" id="kk-note" aria-live="polite">키보드: ← → / A D 이동 · 스페이스 압축</div>
+<div class="kk-palette" aria-hidden="true"></div>
+<script>
+(()=>{
+ const root=document.getElementById('kkuk-steering'), $=id=>root.querySelector('#'+id);
+ const canvas=$('kk-canvas'),ctx=canvas.getContext('2d');
+ const ui={overlay:$('kk-overlay'),title:$('kk-dialog-title'),detail:$('kk-dialog-detail'),start:$('kk-start'),hold:$('kk-hold'),pause:$('kk-pause'),height:$('kk-height'),gates:$('kk-gates'),best:$('kk-best-value'),state:$('kk-state'),percent:$('kk-percent'),fill:$('kk-fill'),meter:$('kk-meter'),note:$('kk-note')};
+ const W=360,H=430,PY=316,BASE=24,MIN=9;
+ let mode='ready',g,held=false,best=0,last=0,acc=0,pointer=null,keyboard=false;
+ const moveKeys=new Set();let dragStart=0,dragX=180,dragScale=1;
+ const clampX=x=>Math.max(64,Math.min(296,x));
+ const colors={};
+ const swatches={};
+ for(const name of ['bg','ink','muted','wall','edge','mint','body','danger','panel','track']){
+  const el=document.createElement('span');el.style.color='var(--'+name+')';root.querySelector('.kk-palette').append(el);swatches[name]=el;
+ }
+ function palette(){for(const name in swatches)colors[name]=getComputedStyle(swatches[name]).color;}
+ palette();
+ const media=matchMedia('(prefers-color-scheme: dark)');media.addEventListener('change',()=>{palette();draw();});
+ function rng(){g.seed=(Math.imul(g.seed,1664525)+1013904223)>>>0;return g.seed/4294967296;}
+ function addGate(z,h,gap,kind,cx){g.gates.push({z,h,gap,kind,cx,passed:false});}
+ function generate(){
+  while(g.next<g.dist+1100){
+   const level=Math.min(1,g.next/9000),index=g.index++;
+   const gap=Math.max(30,40-level*9),choice=index<3?index%2:Math.floor(rng()*3);
+   const cx=index===0?180:index===1?100:index===2?260:[90,180,270][Math.floor(rng()*3)];
+   if(choice===0){addGate(g.next,24,gap,'短',cx);g.next+=275-level*25;}
+   else if(choice===1){addGate(g.next,72,gap+2,'長',cx);g.next+=325-level*25;}
+   else {addGate(g.next,24,gap,'連',cx);addGate(g.next+102,24,gap,'連',cx);g.next+=395-level*25;}
+  }
+ }
+ function reset(){g={dist:0,x:180,targetX:180,r:BASE,v:0,p:0,time:0,passed:0,seed:9173,gates:[],next:235,index:0,flash:0};generate();acc=0;held=false;pointer=null;keyboard=false;moveKeys.clear();syncInput();}
+ function syncInput(){ui.hold.setAttribute('aria-pressed',String(held));ui.hold.textContent=held?'압축 중 · 좌우로 움직이세요':'누른 채 좌우로 드래그';}
+ function setHeld(on){
+  if(mode!=='play')return;
+  if(held&&!on)g.v+=38+g.p*450;
+  held=on;syncInput();
+ }
+ function start(){reset();mode='play';ui.overlay.hidden=true;ui.pause.disabled=false;ui.note.textContent='드래그로 틈에 맞추세요 · 키보드는 ← → + 스페이스';last=0;renderHud();}
+ function pause(){if(mode!=='play')return;mode='pause';pointer=null;keyboard=false;held=false;moveKeys.clear();g.targetX=g.x;syncInput();ui.overlay.hidden=false;ui.title.textContent='잠깐 쉬어가기';ui.detail.textContent='돌아오면 같은 위치에서 계속합니다.';ui.start.textContent='계속하기';ui.pause.disabled=true;}
+ function die(reason){
+  mode='dead';held=false;pointer=null;keyboard=false;moveKeys.clear();syncInput();best=Math.max(best,Math.floor(g.dist/10));ui.best.textContent=best+' m';ui.overlay.hidden=false;ui.title.textContent=Math.floor(g.dist/10)+' m';ui.detail.textContent=reason+'\n'+g.passed+'개의 틈을 통과했어요.';ui.start.textContent='바로 다시 하기';ui.pause.disabled=true;ui.note.textContent=reason;
+ }
+ function collision(r,gate,dist,x=g.x){const dy=Math.max(0,Math.abs(gate.z-dist)-gate.h/2),left=gate.cx-gate.gap/2,right=gate.cx+gate.gap/2;const dx=Math.min(Math.max(0,x-left),Math.max(0,right-x));return dx*dx+dy*dy<(r-1)*(r-1);}
+ function step(dt){
+  if(mode!=='play')return;
+  g.time+=dt;
+  const speed=78+Math.min(44,g.passed*1.15);
+  g.dist+=speed*dt;
+  const axis=Number(moveKeys.has('ArrowRight')||moveKeys.has('KeyD'))-Number(moveKeys.has('ArrowLeft')||moveKeys.has('KeyA'));
+  if(axis){g.x=clampX(g.x+axis*215*dt);g.targetX=g.x;}
+  else {const delta=g.targetX-g.x;g.x=clampX(g.x+Math.sign(delta)*Math.min(Math.abs(delta),240*dt));}
+  if(held)g.p=Math.min(1.01,g.p+dt*.31);
+  else if(g.r>=BASE*.92)g.p=Math.max(0,g.p-dt*1.15);
+  const target=held?MIN:BASE, stiffness=held?260:110,damping=held?28:9;
+  g.v+=(stiffness*(target-g.r)-damping*g.v)*dt;
+  g.r+=g.v*dt;
+  if(g.r<MIN){g.r=MIN;g.v=Math.max(0,g.v);}
+  if(g.r>60){g.r=60;g.v=Math.min(0,g.v);}
+  g.flash=Math.max(0,g.flash-dt);
+  if(g.p>=1){die('너무 오래 눌렀어요. 넓은 곳에서 풀어 주세요.');return;}
+  for(const gate of g.gates){
+   if(collision(g.r,gate,g.dist)){die(Math.abs(g.x-gate.cx)>gate.gap/2-8?'틈의 위치와 어긋났어요. 좌우로 맞춰 보세요.':g.v>8&&!held?'아직 틈 안이에요. 조금 더 지난 뒤에 풀어 보세요.':'벽에 닿았어요. 틈에 닿기 전에 더 작아져야 해요.');return;}
+   if(!gate.passed&&g.dist>gate.z+gate.h/2+g.r){gate.passed=true;g.passed++;g.flash=.28;}
+  }
+  g.gates=g.gates.filter(x=>x.z>g.dist-180);generate();
+ }
+ function renderHud(){
+  ui.height.textContent=Math.floor(g.dist/10)+' m';ui.gates.textContent=g.passed+'개 통과';
+  const percent=Math.min(100,Math.floor(g.p*100));ui.percent.textContent=percent+'%';ui.fill.style.width=percent+'%';ui.fill.style.background=percent>75?colors.danger:colors.mint;ui.meter.setAttribute('aria-valuenow',percent);
+  ui.state.textContent=percent>75?'압축 한계가 가까워요':held?'압축 에너지 축적':g.p>.02?'몸을 펼쳐 에너지 방출':'압축 에너지';
+ }
+ function round(x,y,w,h,r,fill){ctx.fillStyle=fill;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill();}
+ function draw(){
+  ctx.setTransform(2,0,0,2,0,0);ctx.clearRect(0,0,W,H);ctx.fillStyle=colors.bg;ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle=colors.track;ctx.lineWidth=1;
+  for(let y=((g.dist*.55)%54)-54;y<H;y+=54){ctx.beginPath();ctx.moveTo(12,y);ctx.lineTo(20,y);ctx.moveTo(W-20,y);ctx.lineTo(W-12,y);ctx.stroke();}
+  ctx.setLineDash([2,8]);ctx.beginPath();ctx.moveTo(W/2,68);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
+  if(best>0){const y=PY-(best*10-g.dist);if(y>70&&y<H){ctx.strokeStyle=colors.mint;ctx.setLineDash([5,5]);ctx.beginPath();ctx.moveTo(22,y);ctx.lineTo(W-22,y);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle=colors.mint;ctx.font='11px system-ui';ctx.fillText('나의 최고 기록',24,y-7);}}
+  for(const gate of g.gates){
+   const y=PY-(gate.z-g.dist)-gate.h/2;if(y>H+70||y+gate.h<-60)continue;
+   const edge=gate.cx-gate.gap/2,right=gate.cx+gate.gap/2;
+   round(0,y,edge,gate.h,5,colors.wall);round(right,y,W-right,gate.h,5,colors.wall);
+   round(edge-4,y+3,4,gate.h-6,2,colors.edge);round(right,y+3,4,gate.h-6,2,colors.edge);
+   if(y>76&&y<PY-60){ctx.font='11px system-ui';ctx.textAlign='right';ctx.fillStyle=colors.bg;ctx.fillText(gate.h>50?'길게 꾹':gate.kind==='連'?'연속 틈':'짧게 꾹',edge-13,y+gate.h/2+4);ctx.textAlign='left';}
+  }
+  if(held&&g.p>.04){ctx.strokeStyle=colors.body;ctx.globalAlpha=.25;ctx.lineWidth=1;ctx.setLineDash([3,5]);ctx.beginPath();ctx.arc(g.x,PY,BASE+g.p*12,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;}
+  const r=g.r;
+  ctx.fillStyle=g.p>.8?colors.danger:colors.body;ctx.beginPath();ctx.arc(g.x,PY,r,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=colors.panel;ctx.globalAlpha=.38;ctx.beginPath();ctx.ellipse(g.x-r*.28,PY-r*.38,r*.26,r*.14,-.5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+  const eye=Math.max(1.2,r*.065),ex=r*.3;
+  ctx.fillStyle=colors.ink;for(const x of [g.x-ex,g.x+ex]){ctx.beginPath();ctx.arc(x,PY-r*.05,eye,0,Math.PI*2);ctx.fill();}
+  ctx.strokeStyle=colors.ink;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(g.x,PY+r*.17,r*.12,0,Math.PI);ctx.stroke();
+  if(g.flash>0){ctx.fillStyle=colors.mint;ctx.textAlign='center';ctx.font='500 15px system-ui';ctx.fillText('+1',g.x,PY-50-(.28-g.flash)*50);ctx.textAlign='left';}
+ }
+ function frame(now){
+  if(!root.isConnected)return;
+  if(!last)last=now;
+  const dt=Math.min(.08,(now-last)/1000);last=now;
+  if(mode==='play'){acc+=dt;while(acc>=1/120){step(1/120);acc-=1/120;if(mode!=='play'){acc=0;break;}}renderHud();}
+  draw();requestAnimationFrame(frame);
+ }
+ function down(e){
+  if(e.button!==undefined&&e.button!==0)return;
+  if(mode!=='play'||pointer!==null)return;e.preventDefault();pointer=e.pointerId;
+  dragStart=e.clientX;dragX=g.x;dragScale=W/e.currentTarget.getBoundingClientRect().width;
+  e.currentTarget.setPointerCapture?.(e.pointerId);setHeld(true);
+ }
+ function move(e){if(mode!=='play'||pointer!==e.pointerId)return;e.preventDefault();g.targetX=clampX(dragX+(e.clientX-dragStart)*dragScale);}
+ function up(e){if(pointer!==e.pointerId)return;pointer=null;g.targetX=g.x;setHeld(keyboard);}
+ for(const el of [canvas,ui.hold]){el.addEventListener('pointerdown',down);el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',up);el.addEventListener('lostpointercapture',up);el.addEventListener('contextmenu',e=>e.preventDefault());}
+ ui.start.addEventListener('click',()=>{if(mode==='pause'){mode='play';ui.overlay.hidden=true;ui.pause.disabled=false;last=0;acc=0;}else start();ui.hold.focus({preventScroll:true});});
+ ui.pause.addEventListener('click',pause);
+ root.addEventListener('keydown',e=>{
+  if(e.code==='Escape'){pause();return;}
+  if(['ArrowLeft','ArrowRight','KeyA','KeyD'].includes(e.code)){if(mode==='play'){e.preventDefault();moveKeys.add(e.code);}return;}
+  if(e.code!=='Space'||e.target===ui.start||e.target===ui.pause)return;
+  e.preventDefault();if(e.repeat)return;
+  if(mode==='ready'||mode==='dead'){start();ui.hold.focus({preventScroll:true});}
+  keyboard=true;setHeld(true);
+ });
+ root.addEventListener('keyup',e=>{if(moveKeys.has(e.code)){e.preventDefault();moveKeys.delete(e.code);}if(e.code==='Space'){e.preventDefault();keyboard=false;setHeld(pointer!==null);}});
+ window.addEventListener('blur',pause);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
+ root.addEventListener('focusout',e=>{if(!root.contains(e.relatedTarget)&&(keyboard||moveKeys.size))pause();});
+ reset();ui.pause.disabled=true;draw();renderHud();requestAnimationFrame(frame);
+})();
+</script>
+</div>

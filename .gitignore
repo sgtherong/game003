@@ -1,0 +1,6 @@
+# 자동 생성 결과물(다시 만들 수 있음)
+reports/
+node_modules/
+*.log
+.DS_Store
+Thumbs.db

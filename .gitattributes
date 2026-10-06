@@ -1,0 +1,5 @@
+# 줄바꿈은 LF로 통일
+* text=auto eol=lf
+# 기준 시제품 원본은 SHA-256으로 검사하므로 한 바이트도 바꾸지 않는다
+reference/** -text
+*.png binary
