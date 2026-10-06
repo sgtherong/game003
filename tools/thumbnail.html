@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>꾹! 썸네일</title>
+<!-- 공유 미리보기 이미지(1200×630) 원본. node tools/make-thumbnail.js 가 이 페이지를 찍어 web/og-image.png 로 저장한다. -->
+<style>
+  html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
+  body { font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c" width="1200" height="630"></canvas>
+<script src="../web/skins.js"></script>
+<script>
+(function () {
+  var cv = document.getElementById('c'), ctx = cv.getContext('2d');
+  var W = 1200, H = 630;
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+  // ── 배경: 노을 하늘 ──
+  var bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, '#ff9a78'); bg.addColorStop(0.55, '#ffc89a'); bg.addColorStop(1, '#fff0dc');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, W, H);
+  // 해
+  var sg = ctx.createRadialGradient(980, 150, 10, 980, 150, 220);
+  sg.addColorStop(0, 'rgba(255,236,170,0.95)'); sg.addColorStop(0.25, 'rgba(255,224,150,0.55)'); sg.addColorStop(1, 'rgba(255,224,150,0)');
+  ctx.fillStyle = sg; ctx.fillRect(700, 0, 500, 420);
+  ctx.fillStyle = '#ffe9a8'; ctx.beginPath(); ctx.arc(980, 150, 56, 0, Math.PI * 2); ctx.fill();
+  // 빛망울
+  [[120, 520, 60], [560, 90, 40], [1120, 470, 70], [430, 560, 34]].forEach(function (b) {
+    ctx.fillStyle = 'rgba(255,255,255,0.16)'; ctx.beginPath(); ctx.arc(b[0], b[1], b[2], 0, Math.PI * 2); ctx.fill();
+  });
+  // 양옆 절벽
+  function cliff(side, base, color, seed) {
+    ctx.fillStyle = color; ctx.beginPath();
+    var ex = side < 0 ? 0 : W; ctx.moveTo(ex, -10);
+    for (var y = -10; y <= H + 10; y += 12) {
+      var w = base + Math.sin(y * 0.018 + seed) * 22 + Math.sin(y * 0.05 + seed * 2) * 10;
+      ctx.lineTo(side < 0 ? w : W - w, y);
+    }
+    ctx.lineTo(ex, H + 10); ctx.closePath(); ctx.fill();
+  }
+  cliff(1, 70, 'rgba(233,143,138,0.45)', 1.2);
+  cliff(1, 34, 'rgba(201,101,121,0.65)', 3.1);
+  cliff(-1, 26, 'rgba(201,101,121,0.45)', 0.4);
+
+  // ── 오른쪽: 게임 장면 ──
+  var sx = 690, sw = 420, cx = sx + sw / 2;
+  // 바람 줄기
+  ctx.lineCap = 'round';
+  for (var i = 0; i < 16; i++) {
+    var x = sx + 20 + ((i * 53.7) % (sw - 40)), y0 = (i * 97.3) % 560, len = 50 + (i % 4) * 26;
+    var g = ctx.createLinearGradient(0, y0, 0, y0 + len);
+    g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,0.55)');
+    ctx.strokeStyle = g; ctx.lineWidth = 2 + (i % 3);
+    ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y0 + len); ctx.stroke();
+  }
+  // 벽(틈 사이를 아슬아슬하게 통과 중)
+  function wall(y, h, gapC, gap) {
+    var l = gapC - gap / 2, r = gapC + gap / 2;
+    var beam = ctx.createLinearGradient(0, y - 60, 0, y + h + 60);
+    beam.addColorStop(0, 'rgba(255,214,122,0)'); beam.addColorStop(0.5, 'rgba(255,214,122,0.35)'); beam.addColorStop(1, 'rgba(255,214,122,0)');
+    ctx.fillStyle = beam; ctx.fillRect(l, y - 60, gap, h + 120);
+    [[sx - 30, l - (sx - 30)], [r, sx + sw + 30 - r]].forEach(function (s, k) {
+      ctx.fillStyle = 'rgba(0,0,0,0.18)'; rr(s[0], y + 8, s[1], h, 12); ctx.fill();
+      var wg = ctx.createLinearGradient(0, y, 0, y + h);
+      wg.addColorStop(0, '#5a4a74'); wg.addColorStop(0.4, '#3a2f4f'); wg.addColorStop(1, '#241c36');
+      ctx.fillStyle = wg; rr(s[0], y, s[1], h, 12); ctx.fill();
+      ctx.save(); rr(s[0], y, s[1], h, 12); ctx.clip();
+      ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 4;
+      for (var q = s[0] - h; q < s[0] + s[1]; q += 20) { ctx.beginPath(); ctx.moveTo(q, y + h); ctx.lineTo(q + h, y); ctx.stroke(); }
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.fillRect(s[0], y, s[1], 3);
+      ctx.restore();
+    });
+    ctx.save(); ctx.shadowColor = '#ffd27a'; ctx.shadowBlur = 22; ctx.fillStyle = '#ffd27a';
+    rr(l - 7, y + 6, 6, h - 12, 3); ctx.fill(); rr(r + 1, y + 6, 6, h - 12, 3); ctx.fill(); ctx.restore();
+  }
+  wall(90, 44, cx + 40, 150);
+  wall(300, 52, cx, 108);
+
+  // 캐릭터(게임과 같은 그림 코드) — 압축해서 틈을 지나는 순간
+  var px = cx, py = 330, pr = 46;
+  var halo = ctx.createRadialGradient(px, py, pr * 0.5, px, py, pr * 2.2);
+  halo.addColorStop(0, 'rgba(255,118,88,0.45)'); halo.addColorStop(1, 'rgba(255,118,88,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(px, py, pr * 2.2, 0, Math.PI * 2); ctx.fill();
+  // 잔상
+  for (var t = 1; t <= 4; t++) { ctx.fillStyle = 'rgba(255,118,88,' + (0.16 - t * 0.03) + ')'; ctx.beginPath(); ctx.arc(px, py + t * 18, pr * (1 - t * 0.04), 0, Math.PI * 2); ctx.fill(); }
+  KKUK.Skins.paint('base', { ctx: ctx, x: px, y: py, r: pr, held: true, energy: 0.55, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false });
+  // 예상 반동 링
+  ctx.strokeStyle = 'rgba(255,118,88,0.55)'; ctx.lineWidth = 3; ctx.setLineDash([8, 10]);
+  ctx.beginPath(); ctx.arc(px, py, 84, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+  // "아슬!"
+  ctx.font = '900 46px "Malgun Gothic", sans-serif'; ctx.textAlign = 'center';
+  ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(80,40,0,0.25)'; ctx.strokeText('아슬!', px + 118, py - 64);
+  ctx.fillStyle = '#ffd34d'; ctx.fillText('아슬!', px + 118, py - 64);
+
+  // 아래쪽 스킨들
+  var skins = ['slime', 'orange', 'watermelon', 'puffer', 'moon', 'glass'];
+  skins.forEach(function (id, i) {
+    var x = sx + 52 + i * 63, y = 545, r = 24;
+    ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.arc(x, y, r + 8, 0, Math.PI * 2); ctx.fill();
+    KKUK.Skins.paint(id, { ctx: ctx, x: x, y: y, r: r, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false });
+  });
+
+  // ── 왼쪽: 제목·문구 ──
+  ctx.textAlign = 'left';
+  // 마스코트
+  KKUK.Skins.paint('base', { ctx: ctx, x: 128, y: 150, r: 52, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 1, blink: false, expanded: false });
+  ctx.font = '900 150px "Malgun Gothic", sans-serif';
+  ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText('꾹!', 206, 210);
+  ctx.fillStyle = '#2a1626'; ctx.fillText('꾹!', 200, 202);
+  ctx.font = '700 40px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
+  ctx.fillText('누르면 작아지고,', 76, 300);
+  ctx.fillText('떼면 튀어 올라요', 76, 352);
+  // 배지
+  function pill(x, y, text, bgc, fg) {
+    ctx.font = '800 28px "Malgun Gothic", sans-serif';
+    var w = ctx.measureText(text).width + 44;
+    ctx.fillStyle = bgc; rr(x, y, w, 56, 28); ctx.fill();
+    ctx.fillStyle = fg; ctx.fillText(text, x + 22, y + 38);
+    return w;
+  }
+  var bx = 76;
+  bx += pill(bx, 410, '친구에게 도전장', '#2a1626', '#fff5ea') + 14;
+  pill(bx, 410, '오늘의 도전', '#6b5cff', '#ffffff');
+  ctx.font = '600 26px "Malgun Gothic", sans-serif'; ctx.fillStyle = 'rgba(42,22,38,0.65)';
+  ctx.fillText('설치 없이 브라우저에서 바로 · 무료', 76, 532);
+
+  document.title = 'ready';
+})();
+</script>
+</body>
+</html>

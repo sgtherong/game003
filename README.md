@@ -109,4 +109,6 @@ GDevelop 5 설치 후 진행할 순서:
 1. 저장소 Settings → Pages → Source: **Deploy from a branch**, Branch: **main** / **(root)** → Save
 2. 1~2분 뒤 위 주소로 접속. https라서 홈 화면 설치·오프라인 실행·친구 도전장이 모두 동작한다.
 
+링크 미리보기 이미지는 `web/og-image.png`(1200×630)다. `tools/thumbnail.html`을 고친 뒤 `node tools/make-thumbnail.js`로 다시 만든다(Chrome/Edge 필요). `index.html`·`web/index.html`의 미리보기 태그에는 공개 주소가 절대 경로로 들어 있으므로 호스팅 주소가 바뀌면 함께 바꾼다.
+
 공개 저장소이면 이 폴더의 모든 파일(소스·검사·문서·기준 시제품 `reference/`)이 공개된다.
