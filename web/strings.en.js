@@ -65,8 +65,8 @@
     canvasLabel: 'Hold and drag to move and squeeze the creature through gaps',
 
     // Growth mode
-    modeChallenge: 'Challenge', modeChallengeDetail: 'Pure skill record',
-    modeGrowth: 'Growth', modeGrowthDetail: 'Orbs · ability build',
+    modeChallenge: 'Challenge', modeChallengeDetail: 'Pure skill',
+    modeGrowth: 'Growth', modeGrowthDetail: 'Abilities',
     badgeNew: 'NEW',
     growthPrefix: 'Growth',
     level: 'Lv {n}',
@@ -93,7 +93,7 @@
 
     zones: ['Dawn', 'Sky', 'Sunset', 'Night', 'Aurora'],
     speedUp: 'Speed up',
-    modeDaily: 'Daily', modeDailyDetail: 'Same course · ghost',
+    modeDaily: 'Daily', modeDailyDetail: 'Ghost race',
     dailyBestShort: 'Best {n} m',
     dailyPrefix: 'Daily',
     dailyTitle: 'Daily challenge',

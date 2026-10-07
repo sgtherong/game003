@@ -65,8 +65,8 @@
     canvasLabel: '누른 채 좌우로 드래그해 생물을 이동하고 압축하여 틈을 통과하는 게임',
 
     // 성장 모드
-    modeChallenge: '도전', modeChallengeDetail: '순수 실력 기록',
-    modeGrowth: '성장', modeGrowthDetail: '구슬 · 능력 빌드',
+    modeChallenge: '도전', modeChallengeDetail: '실력 기록',
+    modeGrowth: '성장', modeGrowthDetail: '능력 빌드',
     badgeNew: 'NEW',
     growthPrefix: '성장',
     level: 'Lv {n}',
@@ -93,7 +93,7 @@
 
     zones: ['새벽', '하늘', '노을', '밤', '오로라'],
     speedUp: '속도 UP',
-    modeDaily: '오늘', modeDailyDetail: '같은 코스 · 고스트',
+    modeDaily: '오늘', modeDailyDetail: '고스트 대결',
     dailyBestShort: '최고 {n} m',
     dailyPrefix: '오늘',
     dailyTitle: '오늘의 도전',

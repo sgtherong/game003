@@ -103,7 +103,8 @@
     if (!list.length) return '';
     return '<div class="missions"><div class="m-head">' + S.missionsTitle + '</div>' + list.map(function (m) {
       var pct = Math.round(100 * m.progress / m.goal);
-      return '<div class="m-row"><span class="m-text">' + esc(S.missions[m.id].replace('{n}', m.goal)) + '</span>' +
+      var label = esc(S.missions[m.id].replace('{n}', m.goal));
+      return '<div class="m-row"><span class="m-text" title="' + label + '">' + label + '</span>' +
         '<span class="m-rew">' + STAR + m.reward + '</span>' +
         '<span class="m-bar"><i style="width:' + pct + '%"></i></span><span class="m-prog">' + m.progress + '/' + m.goal + '</span></div>';
     }).join('') + '</div>';
