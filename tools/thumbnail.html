@@ -3,7 +3,8 @@
 <head>
 <meta charset="utf-8">
 <title>Boing! 썸네일</title>
-<!-- 공유 미리보기 이미지(1200×630) 원본. node tools/make-thumbnail.js 가 이 페이지를 찍어 web/og-image.png 로 저장한다. -->
+<!-- 공유 미리보기 이미지(1200×630) 원본. node tools/make-thumbnail.js 가 이 페이지를 찍어 web/og-image.png 로 저장한다.
+     글자를 넣지 않는다: 미리보기는 받는 사람의 언어와 상관없이 하나이므로 그림만으로 전한다(제목·설명은 meta 태그가 담당). -->
 <style>
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
   body { font-family: "Pretendard", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
@@ -91,63 +92,88 @@
   // 예상 반동 링
   ctx.strokeStyle = 'rgba(255,118,88,0.55)'; ctx.lineWidth = 3; ctx.setLineDash([8, 10]);
   ctx.beginPath(); ctx.arc(px, py, 84, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
-  // "아슬!"
-  ctx.font = '900 46px "Malgun Gothic", sans-serif'; ctx.textAlign = 'center';
-  ctx.lineWidth = 8; ctx.strokeStyle = 'rgba(80,40,0,0.25)'; ctx.strokeText('아슬!', px + 118, py - 64);
-  ctx.fillStyle = '#ffd34d'; ctx.fillText('아슬!', px + 118, py - 64);
+  // 아슬아슬 반짝임(틈 가장자리)
+  sparkle(px + 104, py - 58, 26, '#ffd34d'); sparkle(px + 140, py - 20, 14, '#fff3c4'); sparkle(px - 108, py - 40, 16, '#ffd34d');
 
   // 아래쪽 스킨들
-  var skins = ['slime', 'orange', 'watermelon', 'puffer', 'moon', 'glass'];
+  var skins = ['slime', 'strawberry', 'bee', 'panda', 'galaxy', 'gold'];
   skins.forEach(function (id, i) {
     var x = sx + 52 + i * 63, y = 545, r = 24;
     ctx.fillStyle = 'rgba(255,255,255,0.55)'; ctx.beginPath(); ctx.arc(x, y, r + 8, 0, Math.PI * 2); ctx.fill();
     KKUK.Skins.paint(id, { ctx: ctx, x: x, y: y, r: r, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false });
   });
 
-  // ── 왼쪽: 제목·문구 (?v=challenge 이면 도전장 카드용) ──
+  // ── 왼쪽: 그림만 (?v=challenge 이면 도전장 카드용) ──
   var challenge = /[?&]v=challenge/.test(location.search);
-  ctx.textAlign = 'left';
-  function pill(x, y, text, bgc, fg, size) {
-    ctx.font = '800 ' + (size || 28) + 'px "Malgun Gothic", sans-serif';
-    var w = ctx.measureText(text).width + 44;
-    ctx.fillStyle = bgc; rr(x, y, w, 56, 28); ctx.fill();
-    ctx.fillStyle = fg; ctx.fillText(text, x + 22, y + 38);
-    return w;
+  function ball(id, x, y, r, st) {
+    ctx.fillStyle = 'rgba(60,20,20,0.12)'; ctx.beginPath(); ctx.ellipse(x, y + r + 14, r * 0.8, r * 0.16, 0, 0, Math.PI * 2); ctx.fill();
+    KKUK.Skins.paint(id, Object.assign({ ctx: ctx, x: x, y: y, r: r, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false }, st || {}));
+  }
+  function arrow(x0, y0, cx, cy, x1, y1) {
+    ctx.strokeStyle = 'rgba(42,22,38,0.55)'; ctx.lineWidth = 6; ctx.lineCap = 'round'; ctx.setLineDash([2, 14]);
+    ctx.beginPath(); ctx.moveTo(x0, y0); ctx.quadraticCurveTo(cx, cy, x1, y1); ctx.stroke(); ctx.setLineDash([]);
+    var a = Math.atan2(y1 - cy, x1 - cx);
+    ctx.fillStyle = 'rgba(42,22,38,0.55)'; ctx.beginPath();
+    ctx.moveTo(x1 + Math.cos(a) * 14, y1 + Math.sin(a) * 14);
+    ctx.lineTo(x1 + Math.cos(a + 2.4) * 14, y1 + Math.sin(a + 2.4) * 14);
+    ctx.lineTo(x1 + Math.cos(a - 2.4) * 14, y1 + Math.sin(a - 2.4) * 14); ctx.closePath(); ctx.fill();
   }
   if (!challenge) {
-    KKUK.Skins.paint('base', { ctx: ctx, x: 128, y: 150, r: 52, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 1, blink: false, expanded: false });
-    // 게임 이름(글로벌 이름). 오른쪽 게임 장면(x≈650~)을 침범하지 않도록 폭에 맞춰 크기 조절
-    var TITLE = 'Boing!', size = 132;
-    do { ctx.font = '900 ' + size + 'px "Segoe UI Black", "Arial Black", "Malgun Gothic", sans-serif'; size -= 4; } while (ctx.measureText(TITLE).width > 420 && size > 60);
-    ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText(TITLE, 206, 206);
-    ctx.fillStyle = '#2a1626'; ctx.fillText(TITLE, 200, 198);
-    ctx.font = '700 40px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
-    ctx.fillText('누르면 작아지고,', 76, 300);
-    ctx.fillText('떼면 튀어 올라요', 76, 352);
-    var bx = 76;
-    bx += pill(bx, 410, '친구에게 도전장', '#2a1626', '#fff5ea') + 14;
-    pill(bx, 410, '오늘의 도전', '#6b5cff', '#ffffff');
-    ctx.font = '600 26px "Malgun Gothic", sans-serif'; ctx.fillStyle = 'rgba(42,22,38,0.65)';
-    ctx.fillText('설치 없이 브라우저에서 바로 · 무료', 76, 532);
+    // 누르기 → 작아짐 → 떼면 튀어 오름
+    ball('base', 140, 360, 62, { look: 1 });
+    // 누르는 손가락 자리: 동심원
+    [44, 62, 80].forEach(function (rad, i) {
+      ctx.strokeStyle = 'rgba(107,92,255,' + (0.75 - i * 0.2) + ')'; ctx.lineWidth = 5;
+      ctx.beginPath(); ctx.arc(330, 380, rad, 0, Math.PI * 2); ctx.stroke();
+    });
+    ball('base', 330, 380, 30, { held: true, energy: 0.8 });
+    // 떼면 튀어 오름: 위로 솟는 잔상 + 큰 몸
+    for (var k = 3; k >= 1; k--) { ctx.fillStyle = 'rgba(255,118,88,' + (0.1 + (3 - k) * 0.05) + ')'; ctx.beginPath(); ctx.arc(520, 210 + k * 46, 70 - k * 9, 0, Math.PI * 2); ctx.fill(); }
+    ball('base', 520, 200, 78, { expanded: true, look: -0.3 });
+    sparkle(600, 110, 30, '#ffd34d'); sparkle(438, 130, 18, '#fff3c4'); sparkle(612, 268, 16, '#fff3c4');
+    arrow(198, 316, 250, 270, 290, 334);
+    arrow(372, 340, 410, 270, 448, 246);
   } else {
-    // 봉투 모양 배지 + 큰 제목
-    ctx.save(); ctx.translate(76, 70);
-    ctx.font = '800 30px "Malgun Gothic", sans-serif';
-    var badgeW = ctx.measureText('Boing! 도전장').width + 90;
-    ctx.fillStyle = '#2a1626'; rr(0, 0, badgeW, 64, 32); ctx.fill();
-    ctx.fillStyle = '#ffd34d'; ctx.fillText('Boing! 도전장', 64, 43);
-    ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
-    rr(20, 18, 34, 26, 4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(22, 21); ctx.lineTo(37, 33); ctx.lineTo(52, 21); ctx.stroke();
+    // 봉투(빨간 별 봉인) → 두 캐릭터의 맞대결
+    ctx.save(); ctx.translate(250, 170); ctx.rotate(-0.08);
+    ctx.fillStyle = 'rgba(60,20,20,0.16)'; rr(-150, -88, 300, 190, 18); ctx.fill();
+    ctx.fillStyle = '#fff8ee'; rr(-150, -100, 300, 190, 18); ctx.fill();
+    ctx.strokeStyle = '#e8cfb4'; ctx.lineWidth = 5; ctx.lineJoin = 'round';
+    ctx.beginPath(); ctx.moveTo(-146, -94); ctx.lineTo(0, 12); ctx.lineTo(146, -94); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(-146, 84); ctx.lineTo(-40, -10); ctx.moveTo(146, 84); ctx.lineTo(40, -10); ctx.stroke();
+    ctx.fillStyle = '#c2364a'; ctx.beginPath(); ctx.arc(0, 12, 34, 0, Math.PI * 2); ctx.fill();
+    star(0, 12, 20, '#ffd34d');
     ctx.restore();
-    ctx.font = '900 104px "Malgun Gothic", sans-serif';
-    ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText('도전장', 82, 262);
-    ctx.fillStyle = '#2a1626'; ctx.fillText('도전장', 76, 256);
-    ctx.fillStyle = '#c2364a'; ctx.fillText('도착!', 76, 372);
-    ctx.font = '700 38px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
-    ctx.fillText('같은 코스에서 나를 이겨 봐', 76, 446);
-    var cx2 = 76;
-    cx2 += pill(cx2, 480, '같은 코스 1:1', '#2a1626', '#fff5ea', 26) + 12;
-    pill(cx2, 480, '설치 없이 바로', '#6b5cff', '#ffffff', 26);
+    sparkle(420, 70, 26, '#ffd34d'); sparkle(84, 260, 18, '#fff3c4');
+    // 맞대결
+    ball('base', 150, 450, 70, { look: 1 });
+    ball('slime', 470, 450, 70, { look: -1 });
+    burst(310, 440, 58, '#ffd34d', '#ff8a3d');
+    bolt(310, 440, 40);
+  }
+  // 4갈래 반짝임
+  function sparkle(x, y, s, col) {
+    ctx.fillStyle = col; ctx.beginPath();
+    ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s); ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s);
+    ctx.fill();
+  }
+  function star(x, y, r, col) {
+    ctx.fillStyle = col; ctx.beginPath();
+    for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rr2 = i % 2 ? r * 0.45 : r; ctx.lineTo(x + Math.cos(a) * rr2, y + Math.sin(a) * rr2); }
+    ctx.closePath(); ctx.fill();
+  }
+  function burst(x, y, r, col, edge) {
+    ctx.fillStyle = edge; ctx.beginPath();
+    for (var i = 0; i < 24; i++) { var a = i * Math.PI / 12, q = i % 2 ? r * 0.62 : r * 1.08; ctx.lineTo(x + Math.cos(a) * q, y + Math.sin(a) * q); }
+    ctx.closePath(); ctx.fill();
+    ctx.fillStyle = col; ctx.beginPath();
+    for (var j = 0; j < 24; j++) { var b = j * Math.PI / 12 + 0.13, q2 = j % 2 ? r * 0.5 : r * 0.88; ctx.lineTo(x + Math.cos(b) * q2, y + Math.sin(b) * q2); }
+    ctx.closePath(); ctx.fill();
+  }
+  function bolt(x, y, h) {
+    ctx.fillStyle = '#2a1626'; ctx.beginPath();
+    ctx.moveTo(x + h * 0.15, y - h); ctx.lineTo(x - h * 0.45, y + h * 0.12); ctx.lineTo(x - h * 0.02, y + h * 0.12);
+    ctx.lineTo(x - h * 0.2, y + h); ctx.lineTo(x + h * 0.45, y - h * 0.18); ctx.lineTo(x + h * 0.02, y - h * 0.18); ctx.closePath(); ctx.fill();
   }
 
   document.title = 'ready';
