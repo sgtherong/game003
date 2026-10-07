@@ -238,7 +238,28 @@
     if (code[0] !== 'z' || !root.DecompressionStream) return Promise.reject(new Error('format'));
     return streamBytes(body, root.DecompressionStream, 'deflate-raw').then(function (b) { return K.Challenge.fromBytes(b); });
   }
-  function challengeLink(code) { return location.origin + location.pathname + '#c=' + code; }
+  // 일반 공유는 '#c='(서버로 전송되지 않음), 카카오 카드 버튼은 '?c='(카카오가 # 뒤를 보장하지 않음)
+  function challengeLink(code, asQuery) { return location.origin + location.pathname + (asQuery ? '?c=' : '#c=') + code; }
+
+  // 카카오 SDK: 처음 쓸 때만, 무결성 검사를 붙여 불러온다
+  var kakaoReady = null;
+  function shareCfg() { return K.shareConfig || {}; }
+  function kakaoEnabled() { return !!shareCfg().kakaoJsKey; }
+  function loadKakao() {
+    if (kakaoReady) return kakaoReady;
+    kakaoReady = new Promise(function (resolve, reject) {
+      if (root.Kakao) return resolve(root.Kakao);
+      var sc = document.createElement('script');
+      sc.src = shareCfg().kakaoSdk.src; sc.integrity = shareCfg().kakaoSdk.integrity; sc.crossOrigin = 'anonymous';
+      sc.onload = function () { root.Kakao ? resolve(root.Kakao) : reject(new Error('sdk')); };
+      sc.onerror = function () { kakaoReady = null; reject(new Error('sdk')); };
+      document.head.appendChild(sc);
+    }).then(function (Kakao) {
+      if (!Kakao.isInitialized()) Kakao.init(shareCfg().kakaoJsKey);
+      return Kakao;
+    });
+    return kakaoReady;
+  }
 
   function shareCard() {
     var back = currentCard || readyCard;
@@ -251,18 +272,22 @@
       '<label class="name-field"><span>' + S.nameLabel + '</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="' + esc(S.namePlaceholder) + '" value="' + esc(ctl.nickname()) + '"></label>' +
       '<div class="share-note" id="share-note"></div>' +
       (isLocalHost() ? '<div class="card-warn local">' + S.localWarn + '</div>' : '') +
-      '<button type="button" class="btn-primary" data-act="send">' + S.shareBtn + '</button>' +
-      '<button type="button" class="btn-ghost" data-act="copy">' + S.copyBtn + '</button>', {
+      (kakaoEnabled() ? '<button type="button" class="btn-kakao" data-act="kakao">' + S.kakaoBtn + '</button>' : '') +
+      (kakaoEnabled()
+        ? '<div class="btn-row"><button type="button" class="btn-ghost" data-act="send">' + S.otherBtn + '</button><button type="button" class="btn-ghost" data-act="copy">' + S.copyBtn + '</button></div>'
+        : '<button type="button" class="btn-primary" data-act="send">' + S.shareBtn + '</button><button type="button" class="btn-ghost" data-act="copy">' + S.copyBtn + '</button>'), {
       close: function () { back(); },
+      kakao: function () { doKakao(); },
       send: function () { doShare(true); },
       copy: function () { doShare(false); }
     }, 'share');
+    if (kakaoEnabled()) loadKakao().catch(function () { /* 누를 때 다시 시도 */ });
     currentCard = function () { shareCard(); };
     var input = $('nick');
     input.addEventListener('keydown', function (e) { e.stopPropagation(); }); // 이름 입력 중 게임 키 처리 안 함
     input.addEventListener('keyup', function (e) { e.stopPropagation(); });
 
-    function build() {
+    function build(asQuery) {
       var p = ctl.challengePayload();
       p.name = ctl.setNickname(input.value);
       return encodeChallenge(p).then(function (code) {
@@ -271,7 +296,20 @@
           return encodeChallenge(p);
         }
         return code;
-      }).then(challengeLink);
+      }).then(function (code) { return challengeLink(code, asQuery); });
+    }
+    // 카카오톡 카드: 문구 + 도전장 썸네일 + "도전 받기" 버튼(긴 링크는 버튼 안에만)
+    function doKakao() {
+      Promise.all([loadKakao(), build(true)]).then(function (r) {
+        var Kakao = r[0], url = r[1], name = ctl.nickname();
+        var title = (name ? S.cardTitleNamed.replace('{name}', name) : S.cardTitle).replace('{h}', rec.height);
+        Kakao.Share.sendDefault({
+          objectType: 'feed',
+          content: { title: title, description: S.cardDesc, imageUrl: shareCfg().challengeImage, imageWidth: 1200, imageHeight: 630,
+            link: { mobileWebUrl: url, webUrl: url } },
+          buttons: [{ title: S.cardButton, link: { mobileWebUrl: url, webUrl: url } }]
+        });
+      }).catch(function () { toast(S.kakaoFail); });
     }
     function doShare(native) {
       build().then(function (url) {
@@ -591,9 +629,10 @@
   readyCard();
 
   // 도전장 링크(#c=...)로 열렸으면: 해독 → 직접 재계산으로 검증 → 도전장 화면. 처리 후 주소에서 지운다.
-  var m = /[#&]c=([A-Za-z0-9_-]{2,12000})/.exec(location.hash);
+  var m = /[#&?]c=([A-Za-z0-9_-]{2,12000})/.exec(location.hash) || /[?&]c=([A-Za-z0-9_-]{2,12000})/.exec(location.search);
   if (m) {
-    try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* 무시 */ }
+    // 도전장 데이터는 주소에서 지운다(#c= 와 ?c= 모두). 다른 쿼리는 남긴다.
+    try { var q = location.search.replace(/([?&])c=[^&]*&?/, '$1').replace(/[?&]$/, ''); history.replaceState(null, '', location.pathname + q); } catch (e) { /* 무시 */ }
     decodeChallenge(m[1]).then(function (payload) {
       var check = K.Challenge.verify(payload, balance);
       incoming = { payload: payload, check: check };

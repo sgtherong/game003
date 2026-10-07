@@ -15,7 +15,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (Replay, Simulation) {
   'use strict';
 
-  var VERSION = 1;
+  var VERSION = 2; // 1: 목표 X를 절댓값으로 저장 / 2: 직전 목표 X와의 차이로 저장(드래그 링크가 훨씬 짧음). 읽기는 둘 다 지원
   var MAX_LINK_CHARS = 7000;     // 이보다 길면 입력 기록을 빼고 기록만 보낸다
   var MAX_NAME = 12;
   var MAX_BYTES = 200000;        // 압축 해제 후 허용 크기
@@ -98,11 +98,12 @@
     w.str(p.skin || 'base'); w.str(cleanName(p.name));
     var d = p.replay || [];
     w.uint(d.length / 3);
-    var last = 0;
+    var last = 0, lastX = 0;
     for (var i = 0; i < d.length; i += 3) {
       w.uint(d[i] - last); last = d[i];
       w.uint(d[i + 1]);
-      if (d[i + 1] === 2 || d[i + 1] === 4) w.sint(d[i + 2]);
+      if (d[i + 1] === 2) { w.sint(d[i + 2] - lastX); lastX = d[i + 2]; }
+      else if (d[i + 1] === 4) w.sint(d[i + 2]);
     }
     return new Uint8Array(w.b);
   }
@@ -110,18 +111,22 @@
   function fromBytes(bytes) {
     if (!bytes || bytes.length > MAX_BYTES) throw new Error('size');
     var r = new Reader(bytes);
-    if (r.uint() !== VERSION) throw new Error('version');
+    var ver = r.uint();
+    if (ver !== 1 && ver !== 2) throw new Error('version');
     var p = { seed: r.uint(), rulesVersion: r.str(16), balanceVersion: r.str(16), generatorVersion: r.str(16) };
     p.height = r.uint(); p.passed = r.uint(); p.ticks = r.uint();
     p.skin = r.str(24); p.name = cleanName(r.str(64));
     var n = r.uint();
     if (n > Replay.MAX_NUMBERS / 3) throw new Error('replay size');
-    var d = [], tick = 0;
+    var d = [], tick = 0, lastX = 0;
     for (var i = 0; i < n; i++) {
       tick += r.uint();
       var code = r.uint();
       if (code > 4) throw new Error('code');
-      d.push(tick, code, code === 2 || code === 4 ? r.sint() : 0);
+      var v = 0;
+      if (code === 2) { v = ver === 2 ? lastX + r.sint() : r.sint(); lastX = v; if (Math.abs(v) > 1e6) throw new Error('range'); }
+      else if (code === 4) v = r.sint();
+      d.push(tick, code, v);
     }
     if (r.i !== bytes.length) throw new Error('trailing');
     if (p.ticks > MAX_TICKS || p.height > 1e6 || p.passed > 1e6) throw new Error('range');

@@ -104,29 +104,47 @@
     KKUK.Skins.paint(id, { ctx: ctx, x: x, y: y, r: r, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false });
   });
 
-  // ── 왼쪽: 제목·문구 ──
+  // ── 왼쪽: 제목·문구 (?v=challenge 이면 도전장 카드용) ──
+  var challenge = /[?&]v=challenge/.test(location.search);
   ctx.textAlign = 'left';
-  // 마스코트
-  KKUK.Skins.paint('base', { ctx: ctx, x: 128, y: 150, r: 52, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 1, blink: false, expanded: false });
-  ctx.font = '900 150px "Malgun Gothic", sans-serif';
-  ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText('꾹!', 206, 210);
-  ctx.fillStyle = '#2a1626'; ctx.fillText('꾹!', 200, 202);
-  ctx.font = '700 40px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
-  ctx.fillText('누르면 작아지고,', 76, 300);
-  ctx.fillText('떼면 튀어 올라요', 76, 352);
-  // 배지
-  function pill(x, y, text, bgc, fg) {
-    ctx.font = '800 28px "Malgun Gothic", sans-serif';
+  function pill(x, y, text, bgc, fg, size) {
+    ctx.font = '800 ' + (size || 28) + 'px "Malgun Gothic", sans-serif';
     var w = ctx.measureText(text).width + 44;
     ctx.fillStyle = bgc; rr(x, y, w, 56, 28); ctx.fill();
     ctx.fillStyle = fg; ctx.fillText(text, x + 22, y + 38);
     return w;
   }
-  var bx = 76;
-  bx += pill(bx, 410, '친구에게 도전장', '#2a1626', '#fff5ea') + 14;
-  pill(bx, 410, '오늘의 도전', '#6b5cff', '#ffffff');
-  ctx.font = '600 26px "Malgun Gothic", sans-serif'; ctx.fillStyle = 'rgba(42,22,38,0.65)';
-  ctx.fillText('설치 없이 브라우저에서 바로 · 무료', 76, 532);
+  if (!challenge) {
+    KKUK.Skins.paint('base', { ctx: ctx, x: 128, y: 150, r: 52, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 1, blink: false, expanded: false });
+    ctx.font = '900 150px "Malgun Gothic", sans-serif';
+    ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText('꾹!', 206, 210);
+    ctx.fillStyle = '#2a1626'; ctx.fillText('꾹!', 200, 202);
+    ctx.font = '700 40px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
+    ctx.fillText('누르면 작아지고,', 76, 300);
+    ctx.fillText('떼면 튀어 올라요', 76, 352);
+    var bx = 76;
+    bx += pill(bx, 410, '친구에게 도전장', '#2a1626', '#fff5ea') + 14;
+    pill(bx, 410, '오늘의 도전', '#6b5cff', '#ffffff');
+    ctx.font = '600 26px "Malgun Gothic", sans-serif'; ctx.fillStyle = 'rgba(42,22,38,0.65)';
+    ctx.fillText('설치 없이 브라우저에서 바로 · 무료', 76, 532);
+  } else {
+    // 봉투 모양 배지 + 큰 제목
+    ctx.save(); ctx.translate(76, 70);
+    ctx.fillStyle = '#2a1626'; rr(0, 0, 250, 64, 32); ctx.fill();
+    ctx.fillStyle = '#ffd34d'; ctx.font = '800 30px "Malgun Gothic", sans-serif'; ctx.fillText('꾹! 도전장', 64, 43);
+    ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
+    rr(20, 18, 34, 26, 4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(22, 21); ctx.lineTo(37, 33); ctx.lineTo(52, 21); ctx.stroke();
+    ctx.restore();
+    ctx.font = '900 104px "Malgun Gothic", sans-serif';
+    ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText('도전장', 82, 262);
+    ctx.fillStyle = '#2a1626'; ctx.fillText('도전장', 76, 256);
+    ctx.fillStyle = '#c2364a'; ctx.fillText('도착!', 76, 372);
+    ctx.font = '700 38px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
+    ctx.fillText('같은 코스에서 나를 이겨 봐', 76, 446);
+    var cx2 = 76;
+    cx2 += pill(cx2, 480, '고스트와 1:1', '#2a1626', '#fff5ea', 26) + 12;
+    pill(cx2, 480, '설치 없이 바로', '#6b5cff', '#ffffff', 26);
+  }
 
   document.title = 'ready';
 })();

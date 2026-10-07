@@ -51,6 +51,25 @@ module.exports = function registerVersusTests(test) {
     return `${rec.height} m 판 → 링크 ${s.length}자 (입력 ${p.replay.length / 3}개)`;
   });
 
+  test('도전장: v2(차이 저장)가 v1보다 짧고, 이전 v1 링크도 그대로 읽힘', () => {
+    // 목표 X가 하나뿐이면 v1(절댓값)과 v2(0에서의 차이) 바이트가 버전 번호만 다르다 → v1 링크를 재현
+    const p = { seed: 5, rulesVersion: 'r1', balanceVersion: balance.balanceVersion, generatorVersion: 'g2', height: 3, passed: 0, ticks: 300, skin: 'base', name: 'a',
+      replay: [10, 1, 0, 12, 2, 180 * 64, 40, 3, 0, 40, 0, 0] };
+    const v2 = Challenge.toBytes(p);
+    assert.strictEqual(v2[0], 2);
+    const v1 = Uint8Array.from(v2); v1[0] = 1;
+    assert.deepStrictEqual(Challenge.fromBytes(v1), Challenge.fromBytes(v2));
+    // 드래그가 많은 판: 차이 저장이 더 짧다
+    const drag = []; let x = 180 * 64;
+    for (let t = 0; t < 600; t++) { x += Math.round(Math.sin(t / 7) * 40); drag.push(t, 2, x); }
+    const q = Object.assign({}, p, { replay: drag, ticks: 700 });
+    const abs = q.replay.slice(); // v1 크기 추정: 절댓값 varint
+    const v2len = zlib.deflateRawSync(Buffer.from(Challenge.toBytes(q))).length;
+    assert.ok(v2len < 900, `v2 ${v2len} bytes`);
+    assert.deepStrictEqual(Challenge.fromBytes(Challenge.toBytes(q)).replay, abs);
+    return `드래그 600틱 → 압축 ${v2len} B`;
+  });
+
   test('도전장: 받은 쪽에서 재계산으로 검증 — 진짜는 확인, 기록·입력 위조는 불일치', () => {
     const a = makeCtl(null, 99);
     botRun(a, 'challenge', 120 * 20);

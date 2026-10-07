@@ -111,4 +111,6 @@ GDevelop 5 설치 후 진행할 순서:
 
 링크 미리보기 이미지는 `web/og-image.png`(1200×630)다. `tools/thumbnail.html`을 고친 뒤 `node tools/make-thumbnail.js`로 다시 만든다(Chrome/Edge 필요). `index.html`·`web/index.html`의 미리보기 태그에는 공개 주소가 절대 경로로 들어 있으므로 호스팅 주소가 바뀌면 함께 바꾼다.
 
+카카오톡 공유 카드를 쓰려면 developers.kakao.com에서 앱을 만들고, 플랫폼 > Web에 사이트 도메인(예: `https://sgtherong.github.io`)을 등록한 뒤, 앱 키 중 **JavaScript 키**를 `web/share-config.js`의 `kakaoJsKey`에 넣는다. 비어 있으면 카카오 버튼 없이 일반 공유만 보인다. 도전장 카드 이미지는 `node tools/make-thumbnail.js challenge`로 다시 만든다.
+
 공개 저장소이면 이 폴더의 모든 파일(소스·검사·문서·기준 시제품 `reference/`)이 공개된다.

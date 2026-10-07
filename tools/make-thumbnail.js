@@ -8,8 +8,10 @@ const path = require('path');
 const os = require('os');
 
 const root = path.join(__dirname, '..');
-const out = path.join(root, 'web', 'og-image.png');
-const page = 'file:///' + path.join(__dirname, 'thumbnail.html').replace(/\\/g, '/');
+// 인자 'challenge' → 도전장 카드용 web/og-challenge.png, 없으면 기본 web/og-image.png
+const variant = process.argv[2] === 'challenge' ? 'challenge' : 'default';
+const out = path.join(root, 'web', variant === 'challenge' ? 'og-challenge.png' : 'og-image.png');
+const page = 'file:///' + path.join(__dirname, 'thumbnail.html').replace(/\\/g, '/') + (variant === 'challenge' ? '?v=challenge' : '');
 const candidates = [
   'C:/Program Files/Google/Chrome/Application/chrome.exe',
   'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -28,5 +30,5 @@ child.on('exit', () => {
   clearTimeout(timer);
   if (!fs.existsSync(out)) { console.error('스크린샷 실패'); process.exit(1); }
   const b = fs.readFileSync(out);
-  console.log(`web/og-image.png  ${b.readUInt32BE(16)}x${b.readUInt32BE(20)}  ${b.length} bytes`);
+  console.log(`web/${path.basename(out)}  ${b.readUInt32BE(16)}x${b.readUInt32BE(20)}  ${b.length} bytes`);
 });
