@@ -64,25 +64,26 @@ module.exports = function registerSkinTests(test) {
     return `${ids.length}종 × 반지름 4 × 상태 4, 가장 바깥 ${worst.toFixed(3)}r (${worstId})`;
   });
 
-  test('외형: 판 보상 = min(20, 통과 수 ÷ 3), 판마다 한 번만', () => {
+  test('외형: 판 보상 = min(최대, 통과 수 ÷ perPassed), 판마다 한 번만', () => {
+    const RW = balance.cosmetics.reward;
     const store = Save.memoryStore();
     const ctl = makeCtl(store);
     ctl.start('challenge');
     ctl.run.passedCount = 17; // 보상 계산만 확인
     ctl.replaySource = () => ({ ops: [], axis: 0 });
     let f = 0; while (ctl.state !== 'RESULT' && f++ < 2000) frames(ctl, 1);
-    assert.strictEqual(ctl.lastRecord.coinsEarned, Math.min(20, Math.floor(ctl.lastRecord.passed / 3)));
+    assert.strictEqual(ctl.lastRecord.coinsEarned, Math.min(RW.max, Math.floor(ctl.lastRecord.passed / RW.perPassed)));
     const coins = ctl.coins();
     frames(ctl, 200);
     assert.strictEqual(ctl.coins(), coins, '같은 판 보상 중복 없음');
     assert.strictEqual(Save.load(store).profile.softCurrency, coins, '저장됨');
     ctl.start('challenge'); ctl.run.passedCount = 300;
     f = 0; while (ctl.state !== 'RESULT' && f++ < 2000) frames(ctl, 1);
-    assert.strictEqual(ctl.lastRecord.coinsEarned, 20, '한 판 최대 20');
+    assert.strictEqual(ctl.lastRecord.coinsEarned, RW.max, '한 판 최대');
     // 튜토리얼은 보상 없음
     const before = ctl.coins(); ctl.startTutorial(); frames(ctl, 600); ctl.pause('x'); ctl.exitToMenu();
     assert.strictEqual(ctl.coins(), before);
-    return `통과 ${17}→${Math.floor(17 / 3)}별, 300→20별`;
+    return `통과 17→${Math.floor(17 / RW.perPassed)}별, 300→${RW.max}별`;
   });
 
   test('외형: 구매·장착 — 부족하면 실패, 사면 차감·해금·즉시 장착, 저장 후 복원', () => {
@@ -91,19 +92,31 @@ module.exports = function registerSkinTests(test) {
     assert.deepStrictEqual(ctl.skinCatalog().filter(k => k.owned).map(k => k.id), ['base']);
     assert.strictEqual(ctl.buySkin('slime'), 'insufficient');
     assert.strictEqual(ctl.equipSkin('slime'), false, '잠긴 스킨 장착 불가');
-    ctl.profile.softCurrency = 100;
+    const price = balance.cosmetics.skins.find(k => k.id === 'slime').price;
+    ctl.profile.softCurrency = price + 20;
     assert.strictEqual(ctl.buySkin('slime'), 'ok');
-    assert.strictEqual(ctl.coins(), 70);
+    assert.strictEqual(ctl.coins(), 20);
     assert.strictEqual(ctl.equippedSkin(), 'slime');
     assert.strictEqual(ctl.buySkin('slime'), 'owned');
     assert.strictEqual(ctl.buySkin('dragon'), 'unknown');
     assert.ok(ctl.equipSkin('base'));
     const again = makeCtl(store);
     assert.deepStrictEqual(again.profile.cosmetics, { unlocked: ['base', 'slime'], equipped: 'base' });
-    assert.strictEqual(again.coins(), 70);
+    assert.strictEqual(again.coins(), 20);
     // 설정 변경(검증 재실행)이 해금 목록을 지우지 않음
     again.updateSettings({ sfx: false });
     assert.deepStrictEqual(again.profile.cosmetics.unlocked, ['base', 'slime']);
+  });
+
+  test('외형: 가격은 기본(0)부터 오름차순, 이름은 두 언어 모두 있음', () => {
+    const skins = balance.cosmetics.skins;
+    assert.strictEqual(skins[0].id, 'base'); assert.strictEqual(skins[0].price, 0);
+    for (let i = 1; i < skins.length; i++) assert.ok(skins[i].price > skins[i - 1].price, skins[i].id + ' 가격 순서');
+    global.KKUK = global.KKUK || {};
+    require('../web/strings.ko.js'); require('../web/strings.en.js');
+    for (const lang of ['ko', 'en']) for (const k of skins) assert.ok(global.KKUK.stringsByLang[lang].skinNames[k.id], lang + ' 이름 없음: ' + k.id);
+    const total = skins.reduce((a, k) => a + k.price, 0);
+    return `${skins.length}종, 전체 ${total}별(한 판 최대 ${balance.cosmetics.reward.max}별)`;
   });
 
   test('외형: 스킨은 게임 계산에 영향 없음(같은 시드·입력이면 결과 동일)', () => {

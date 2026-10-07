@@ -100,10 +100,10 @@ module.exports = function registerTutorialTests(test) {
     const ctl = makeCtl(store);
     ctl.updateSettings({ sfx: false, haptics: false, reducedEffects: true, language: 'en' });
     const again = makeCtl(store);
-    assert.deepStrictEqual(again.profile.settings, { sfx: false, music: false, haptics: false, reducedEffects: true, language: 'en' });
-    again.updateSettings({ language: 'xx', music: 'loud' });
+    assert.deepStrictEqual(again.profile.settings, { sfx: false, bgm: true, haptics: false, reducedEffects: true, language: 'en' });
+    again.updateSettings({ language: 'xx', bgm: 'loud' });
     assert.strictEqual(again.profile.settings.language, 'ko');
-    assert.strictEqual(again.profile.settings.music, false);
+    assert.strictEqual(again.profile.settings.bgm, true);
   });
 };
 

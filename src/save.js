@@ -34,7 +34,7 @@
     return {
       schemaVersion: SCHEMA_VERSION,
       tutorialCompleted: false,
-      settings: { sfx: true, music: false, haptics: true, reducedEffects: false, language: 'ko' },
+      settings: { sfx: true, bgm: true, haptics: true, reducedEffects: false, language: 'ko' },
       records: {},
       lastInputMode: 'touch',
       cosmetics: { unlocked: ['base'], equipped: 'base' },
@@ -80,7 +80,7 @@
     out.tutorialCompleted = isBool(raw.tutorialCompleted) ? raw.tutorialCompleted : (repaired.push('tutorialCompleted'), d.tutorialCompleted);
 
     var s = raw.settings && typeof raw.settings === 'object' ? raw.settings : (repaired.push('settings'), {});
-    ['sfx', 'music', 'haptics', 'reducedEffects'].forEach(function (k) {
+    ['sfx', 'bgm', 'haptics', 'reducedEffects'].forEach(function (k) {
       if (isBool(s[k])) out.settings[k] = s[k]; else if (raw.settings) repaired.push('settings.' + k);
     });
     if (LANGUAGES.indexOf(s.language) >= 0) out.settings.language = s.language; else if (raw.settings) repaired.push('settings.language');

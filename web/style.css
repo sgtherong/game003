@@ -401,6 +401,8 @@ body.reduced .card, body.reduced .card-mascot, body.reduced .coach.retry { anima
 .skin-tile:active { transform: scale(.96); }
 .skin-tile:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 .buy-bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding: 8px 8px 8px 12px; border-radius: 14px; background: var(--gold-soft); }
+/* 외형이 많아 카드가 스크롤되어도 구매 줄은 항상 보이게 */
+.card.skins .buy-bar { position: sticky; bottom: 0; z-index: 1; background: color-mix(in srgb, var(--gold) 16%, var(--panel-solid)); box-shadow: 0 -6px 14px -8px rgba(0,0,0,.25); }
 .buy-bar span { font-weight: 800; font-size: 13.5px; }
 .buy-bar em { font-style: normal; font-size: 12px; color: var(--muted); }
 .btn-primary.small { width: auto; min-height: 40px; padding: 0 14px; font-size: 13.5px; }

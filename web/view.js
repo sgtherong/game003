@@ -59,7 +59,21 @@
 
     function mix(a, b, t) { return lerpHex(a, b, t); }
     function alpha(hex, a) { var c = hexToRgb(hex); return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + a + ')'; }
-    function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+    // roundRect가 없는 브라우저(iOS 15 Safari 등)에서는 직접 그린다 — 없으면 그리기가 예외로 멈춘다
+    function rr(x, y, w, h, r) {
+      ctx.beginPath();
+      if (ctx.roundRect) { ctx.roundRect(x, y, w, h, r); return; }
+      var q = Array.isArray(r) ? r : [r, r, r, r];
+      if (q.length === 1) q = [q[0], q[0], q[0], q[0]]; else if (q.length === 2) q = [q[0], q[1], q[0], q[1]]; else if (q.length === 3) q = [q[0], q[1], q[2], q[1]];
+      var m = Math.min(Math.abs(w), Math.abs(h)) / 2;
+      var tl = Math.min(m, q[0] || 0), tr = Math.min(m, q[1] || 0), br = Math.min(m, q[2] || 0), bl = Math.min(m, q[3] || 0);
+      ctx.moveTo(x + tl, y);
+      ctx.arcTo(x + w, y, x + w, y + h, tr);
+      ctx.arcTo(x + w, y + h, x, y + h, br);
+      ctx.arcTo(x, y + h, x, y, bl);
+      ctx.arcTo(x, y, x + w, y, tl);
+      ctx.closePath();
+    }
 
     // ── 구간 팔레트 ──
     function zoneAt(dist) {
@@ -275,13 +289,13 @@
       }
     }
 
-    function drawBestLine(dist, best) {
+    function drawBestLine(dist, best, name) {
       if (best <= 0) return;
       var y = PY - (best * UPM - dist);
       if (y < 70 || y > H) return;
       ctx.strokeStyle = colors.mint; ctx.lineWidth = 1.5; ctx.setLineDash([6, 5]);
       ctx.beginPath(); ctx.moveTo(20, y); ctx.lineTo(W - 20, y); ctx.stroke(); ctx.setLineDash([]);
-      var label = strings.bestLine + ' ' + best + ' m';
+      var label = (name || strings.bestLine) + ' ' + best + ' m';
       ctx.font = '700 10.5px ' + FONT;
       var tw = ctx.measureText(label).width + 16;
       ctx.fillStyle = colors.mint; rr(22, y - 22, tw, 18, 9); ctx.fill();
@@ -575,6 +589,37 @@
       ctx.fillText(g.label || strings.ghost, gr.x, y - gr.radius - 6); ctx.textAlign = 'left';
     }
 
+    // 압축 에너지 게이지: 몸을 감싸는 원호(12시부터 시계 방향). 몸이 줄면 같이 줄어 늘 몸 가까이에 있다.
+    // 경고 구간(warningAbove)부터 주황, 한계 직전에는 빨강으로 깜빡인다. 하단 막대와 같은 값(한계 대비 비율).
+    var ringShow = 0;
+    function drawEnergyRing(ctl) {
+      var run = ctl.run, st = ctl.state;
+      var ab = ctl.activeBalance ? ctl.activeBalance() : balance;
+      var k = clamp01(run.energy / ab.energy.failAt);
+      var live = st === 'PLAYING' || st === 'PAUSED' || st === 'RESUME_COUNTDOWN' || st === 'CHOOSING';
+      // 나타나고 사라질 때 부드럽게(에너지가 거의 없으면 숨김)
+      var target = live && (k > 0.015 || run.logicalHeld) ? 1 : 0;
+      ringShow = target > ringShow ? Math.min(target, ringShow + 0.2) : Math.max(target, ringShow - 0.12);
+      if (ringShow <= 0.01) return;
+      var x = run.x, R = run.radius + 7, warnAt = ab.energy.warningAbove;
+      var warn = k >= warnAt, crit = k >= 0.92;
+      var col = crit ? colors.danger : warn ? '#ff9a2e' : colors.mint;
+      var a = ringShow * (crit && !reduced() ? 0.65 + 0.35 * Math.abs(Math.sin(lastNow / 70)) : 1);
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = Z.dark ? 'rgba(255,255,255,' + (0.18 * ringShow).toFixed(3) + ')' : 'rgba(29,40,51,' + (0.14 * ringShow).toFixed(3) + ')';
+      ctx.lineWidth = 3.5;
+      ctx.beginPath(); ctx.arc(x, PY, R, 0, Math.PI * 2); ctx.stroke();
+      if (k > 0.004) {
+        ctx.strokeStyle = alpha(col, a);
+        ctx.beginPath(); ctx.arc(x, PY, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * k); ctx.stroke();
+      }
+      // 경고 시작 눈금(하단 막대의 75% 표시와 같은 자리)
+      var ta = -Math.PI / 2 + Math.PI * 2 * warnAt;
+      ctx.strokeStyle = Z.dark ? 'rgba(255,255,255,' + (0.7 * ringShow).toFixed(3) + ')' : 'rgba(29,40,51,' + (0.5 * ringShow).toFixed(3) + ')';
+      ctx.lineWidth = 1.5; ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(x + Math.cos(ta) * (R - 3.5), PY + Math.sin(ta) * (R - 3.5)); ctx.lineTo(x + Math.cos(ta) * (R + 3.5), PY + Math.sin(ta) * (R + 3.5)); ctx.stroke();
+    }
+
     // 재개 준비 링(FIX-08): 남은 시간만큼 줄어드는 원
     function drawCountdown(ctl) {
       if (ctl.state !== 'RESUME_COUNTDOWN') return;
@@ -612,7 +657,8 @@
       lastZoneIndex = Z.index;
 
       drawBackground(run.distance, nowMs);
-      if (ctl.mode !== 'tutorial') drawBestLine(run.distance, ctl.best);
+      // 대결: 상대 기록선(이름 표시). 고스트가 없는 짧은 링크에서도 넘어야 할 높이가 보인다
+      if (ctl.mode !== 'tutorial') drawBestLine(run.distance, ctl.best, ctl.mode === 'versus' && ctl.versus ? (ctl.versus.name || strings.vsPrefix) : null);
       for (var i = 0; i < run.gates.length; i++) if (!run.gates[i].broken) drawGate(run.gates[i], run.distance);
       drawZone(ctl);
       drawOrbs(ctl, nowMs);
@@ -620,6 +666,7 @@
       drawGhost(ctl);
       drawPlayer(run, ctl.state, nowMs, playing && !frozen, ctl.equippedSkin ? ctl.equippedSkin() : 'base');
       drawShields(ctl, nowMs);
+      drawEnergyRing(ctl);
       drawEffects(run);
       drawVignette();
       drawBanner();

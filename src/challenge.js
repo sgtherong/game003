@@ -1,9 +1,12 @@
 // Challenge — 친구 도전장(서버 없는 비동기 대결).
-// 링크 = 코스 시드 + 기록 + (가능하면) 입력 기록. 받은 쪽은 입력 기록을 직접 재계산해 기록을 검증한다.
+// 짧은 링크(v3, 기본) = 코스 시드 + 버전 꼬리표 + 기록 + 이름 + 검사값. 고스트 없음, 링크 약 30자.
+//   검사값은 손으로 고친 링크를 거르는 정도이며 기록 자체를 증명하지는 않는다(서버 없음).
+// 긴 링크(v1/v2, 이전 버전이 보낸 것) = 위 내용 + 입력 기록. 받은 쪽은 입력 기록을 재계산해 검증하고 고스트로 쓴다. 읽기만 지원.
 // 링크 내용은 신뢰할 수 없는 외부 입력이므로 모든 값을 범위·형식 검사한다. 실행 가능한 코드나 HTML은 담지 않는다.
 //
 // 바이너리 형식(v1): 모든 정수는 varint(부호 있는 값은 zigzag)
 //   [1] seed rules balance generator height passed ticks skin name count (dtick code [value])*
+// 바이너리 형식(v3): [3] seed versionTag height passed name check(2바이트 고정)
 // 문자열 = 길이 varint + UTF-8 바이트. 압축은 플랫폼 쪽(브라우저 CompressionStream, Node zlib)에서 한다.
 (function (root, factory) {
   var isNode = typeof module === 'object' && module.exports;
@@ -15,8 +18,9 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, function (Replay, Simulation) {
   'use strict';
 
-  var VERSION = 2; // 1: 목표 X를 절댓값으로 저장 / 2: 직전 목표 X와의 차이로 저장(드래그 링크가 훨씬 짧음). 읽기는 둘 다 지원
-  var MAX_LINK_CHARS = 7000;     // 이보다 길면 입력 기록을 빼고 기록만 보낸다
+  // 1: 목표 X를 절댓값으로 저장 / 2: 직전 목표 X와의 차이로 저장 / 3: 입력 기록 없는 짧은 링크(기본)
+  var VERSION = 3;
+  var MAX_LINK_CHARS = 7000;     // 이전 긴 링크(v1/v2) 형식의 길이 상한(검사용)
   var MAX_NAME = 12;
   var MAX_BYTES = 200000;        // 압축 해제 후 허용 크기
   var MAX_TICKS = 120 * 60 * 30; // 30분
@@ -89,10 +93,54 @@
     var s = utf8Decode(this.b.slice(this.i, this.i + n)); this.i += n; return s;
   };
 
+  // FNV-1a 32비트
+  function fnv(bytes, h) {
+    h = h == null ? 0x811c9dc5 : h;
+    for (var i = 0; i < bytes.length; i++) { h ^= bytes[i]; h = Math.imul(h, 0x01000193) >>> 0; }
+    return h >>> 0;
+  }
+  // 규칙·설정·생성기 버전을 16비트 꼬리표로(같은 코스를 만들 수 있는지 확인용)
+  function versionTag(rulesVersion, balanceVersion, generatorVersion) {
+    return fnv(utf8Encode(rulesVersion + '|' + balanceVersion + '|' + generatorVersion)) & 0xffff;
+  }
+  var CHECK_SALT = fnv(utf8Encode('boing-challenge'));
+  function checkOf(bytes) { return fnv(bytes, CHECK_SALT) & 0xffff; }
+
+  // 짧은 링크(v3)
+  function toShortBytes(p) {
+    var w = new Writer();
+    w.uint(3); w.uint(p.seed >>> 0);
+    w.uint(versionTag(p.rulesVersion, p.balanceVersion, p.generatorVersion));
+    w.uint(p.height); w.uint(p.passed);
+    w.str(cleanName(p.name));
+    var c = checkOf(w.b);
+    w.b.push(c >> 8, c & 255);
+    return new Uint8Array(w.b);
+  }
+  function fromShortBytes(bytes) {
+    if (bytes.length < 8 || bytes.length > 80) throw new Error('size');
+    var body = bytes.slice(0, bytes.length - 2);
+    if (checkOf(body) !== ((bytes[bytes.length - 2] << 8) | bytes[bytes.length - 1])) throw new Error('check');
+    var r = new Reader(body);
+    r.uint(); // 버전(3)
+    var p = { seed: r.uint(), versionTag: r.uint() };
+    p.height = r.uint(); p.passed = r.uint();
+    p.name = cleanName(r.str(64));
+    if (r.i !== body.length) throw new Error('trailing');
+    if (p.versionTag > 0xffff || p.height > 1e6 || p.passed > 1e6) throw new Error('range');
+    p.ticks = 0; p.skin = 'base'; p.replay = null;
+    return p;
+  }
+
+  // 입력 기록이 없으면 짧은 링크(v3), 있으면 긴 링크(v2 — 검사·이전 형식 재현용)
   // payload: { seed, rulesVersion, balanceVersion, generatorVersion, height, passed, ticks, skin, name, replay: number[] | null }
   function toBytes(p) {
+    if (!p.replay || !p.replay.length) return toShortBytes(p);
+    return toLongBytes(p);
+  }
+  function toLongBytes(p) {
     var w = new Writer();
-    w.uint(VERSION); w.uint(p.seed >>> 0);
+    w.uint(2); w.uint(p.seed >>> 0);
     w.str(p.rulesVersion); w.str(p.balanceVersion); w.str(p.generatorVersion);
     w.uint(p.height); w.uint(p.passed); w.uint(p.ticks);
     w.str(p.skin || 'base'); w.str(cleanName(p.name));
@@ -110,6 +158,7 @@
 
   function fromBytes(bytes) {
     if (!bytes || bytes.length > MAX_BYTES) throw new Error('size');
+    if (bytes.length && bytes[0] === 3) return fromShortBytes(bytes);
     var r = new Reader(bytes);
     var ver = r.uint();
     if (ver !== 1 && ver !== 2) throw new Error('version');
@@ -163,6 +212,7 @@
   function verify(p, balance) {
     var gv = balance.generator.version || 'r0';
     var bv = balance.balanceVersion || balance.profile;
+    if (p.versionTag != null) return { status: p.versionTag === versionTag('r1', bv, gv) ? 'unverified' : 'version' };
     if (p.rulesVersion !== 'r1' || p.balanceVersion !== bv || p.generatorVersion !== gv) return { status: 'version' };
     if (!p.replay) return { status: 'unverified' };
     var rp = { v: 1, seed: p.seed, ticks: p.ticks, data: p.replay };
@@ -186,6 +236,6 @@
   return {
     VERSION: VERSION, MAX_LINK_CHARS: MAX_LINK_CHARS, MAX_NAME: MAX_NAME,
     toBytes: toBytes, fromBytes: fromBytes, b64url: b64url, unb64url: unb64url,
-    cleanName: cleanName, verify: verify, compare: compare
+    cleanName: cleanName, verify: verify, compare: compare, versionTag: versionTag
   };
 });

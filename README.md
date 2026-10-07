@@ -106,7 +106,7 @@ GDevelop 5 설치 후 진행할 순서:
 
 ## 공개 배포 (GitHub Pages)
 
-이 폴더 전체를 저장소 루트로 올리고 Pages를 켜면 `https://<계정>.github.io/<저장소>/`에서 실행된다(루트 `index.html`이 `web/`으로 넘기며 도전장 링크 `#c=…`도 유지). 빌드 단계는 없다. `.nojekyll`은 Pages가 파일을 가공하지 않게 한다.
+이 폴더 전체를 저장소 루트로 올리고 Pages를 켜면 `https://<계정>.github.io/<저장소>/`에서 실행된다(루트 `index.html`이 `web/`으로 넘기며 도전장 링크 `#c=…`도 유지. 도전장 공유 주소는 미리보기 전용 페이지 `c/`를 거친다). 빌드 단계는 없다. `.nojekyll`은 Pages가 파일을 가공하지 않게 한다.
 
 1. 저장소 Settings → Pages → Source: **Deploy from a branch**, Branch: **main** / **(root)** → Save
 2. 1~2분 뒤 위 주소로 접속. https라서 홈 화면 설치·오프라인 실행·친구 도전장이 모두 동작한다.

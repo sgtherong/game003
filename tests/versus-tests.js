@@ -39,7 +39,34 @@ function link(payload) { return 'z' + Challenge.b64url(zlib.deflateRawSync(Buffe
 function unlink(s) { return Challenge.fromBytes(new Uint8Array(zlib.inflateRawSync(Buffer.from(Challenge.unb64url(s.slice(1)))))); }
 
 module.exports = function registerVersusTests(test) {
-  test('도전장: 인코딩 왕복이 정확하고 링크 길이가 적당함', () => {
+  test('도전장: 짧은 링크(v3) — 코스·기록·이름만, 30자 안팎, 고친 링크·다른 버전은 거절', () => {
+    const a = makeCtl(null, 4321);
+    botRun(a, 'challenge', 120 * 40);
+    const p = Object.assign(a.challengePayload(), { name: '영희', replay: null });
+    const code = 'r' + Challenge.b64url(Challenge.toBytes(p));
+    const url = 'https://sgtherong.github.io/game003/c/#' + code;
+    assert.ok(code.length <= 40, `코드 ${code.length}자`);
+    const back = Challenge.fromBytes(Challenge.unb64url(code.slice(1)));
+    for (const k of ['seed', 'height', 'passed', 'name']) assert.strictEqual(back[k], p[k], k);
+    assert.strictEqual(back.replay, null);
+    assert.strictEqual(Challenge.verify(back, balance).status, 'unverified');
+    // 기록 한 바이트만 바꿔도 검사값에서 걸림
+    const bytes = Challenge.toBytes(p);
+    for (let i = 1; i < bytes.length - 2; i++) { const t = Uint8Array.from(bytes); t[i] ^= 1; assert.throws(() => Challenge.fromBytes(t), `바이트 ${i}`); }
+    // 다른 설정 버전으로 만든 링크 → 같은 코스를 만들 수 없음
+    const other = Challenge.fromBytes(Challenge.toBytes(Object.assign({}, p, { balanceVersion: 'r9.9' })));
+    assert.strictEqual(Challenge.verify(other, balance).status, 'version');
+    // 받은 쪽 대결: 같은 코스, 고스트 없음, 상대 기록과 비교
+    const b = makeCtl(null, 7);
+    assert.ok(b.acceptChallenge(back, Challenge.verify(back, balance)));
+    b.start('versus');
+    assert.strictEqual(b.run.runSeed, p.seed);
+    assert.strictEqual(b.ghost, null);
+    assert.strictEqual(b.getBest(null, 'versus'), p.height);
+    return `${p.height} m 판 → 코드 ${code.length}자, 전체 주소 ${url.length}자`;
+  });
+
+  test('도전장(이전 긴 링크 v2): 인코딩 왕복이 정확하고 링크 길이가 적당함', () => {
     const a = makeCtl(null, 4321);
     const rec = botRun(a, 'challenge', 120 * 40);
     const p = a.challengePayload();

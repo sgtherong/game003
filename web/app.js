@@ -200,7 +200,8 @@
 
   // ── 성장 모드: 레벨업 카드 ──
   function levelUpCard(level, offers) {
-    currentCard = null;
+    // 설정을 열었다 닫으면 이 카드로 돌아온다(시작 화면으로 가면 진행 중인 판을 잃는다)
+    currentCard = function () { levelUpCard(level, offers); };
     var html = '<div class="card-title">' + S.levelUpTitle + '</div>' +
       '<div class="card-sub">' + S.level.replace('{n}', level) + ' · ' + S.levelUpSub + '</div><div class="offers">';
     offers.forEach(function (o, i) {
@@ -224,14 +225,9 @@
     var h = location.hostname;
     return location.protocol === 'file:' || /^(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|\[?::1)/.test(h) || h === '';
   }
-  // 압축: 브라우저 CompressionStream(deflate-raw) 지원 시 'z', 아니면 압축 없이 'r'
+  // 받은 링크 해독: 'r' = 압축 없음(짧은 링크), 'z' = deflate-raw 압축(이전 버전의 긴 링크)
   function streamBytes(bytes, Ctor, fmt) {
     return new Response(new Blob([bytes]).stream().pipeThrough(new Ctor(fmt))).arrayBuffer().then(function (b) { return new Uint8Array(b); });
-  }
-  function encodeChallenge(payload) {
-    var raw = K.Challenge.toBytes(payload);
-    if (!root.CompressionStream) return Promise.resolve('r' + K.Challenge.b64url(raw));
-    return streamBytes(raw, root.CompressionStream, 'deflate-raw').then(function (z) { return 'z' + K.Challenge.b64url(z); });
   }
   function decodeChallenge(code) {
     var body = K.Challenge.unb64url(code.slice(1));
@@ -239,8 +235,14 @@
     if (code[0] !== 'z' || !root.DecompressionStream) return Promise.reject(new Error('format'));
     return streamBytes(body, root.DecompressionStream, 'deflate-raw').then(function (b) { return K.Challenge.fromBytes(b); });
   }
-  // 일반 공유는 '#c='(서버로 전송되지 않음), 카카오 카드 버튼은 '?c='(카카오가 # 뒤를 보장하지 않음)
-  function challengeLink(code, asQuery) { return location.origin + location.pathname + (asQuery ? '?c=' : '#c=') + code; }
+  // 공유 주소는 도전장 전용 안내 페이지(…/c/)로 보낸다. 그 페이지가 도전장 썸네일·제목을 미리보기로 보여 주고 게임으로 넘긴다.
+  // 일반 공유는 '#코드'(서버로 전송되지 않음), 카카오 카드 버튼은 '?c=코드'(카카오가 # 뒤를 보장하지 않음)
+  function challengeLink(code, asQuery) {
+    var base = location.origin + location.pathname;
+    var page = /web\/(index\.html)?$/;
+    if (page.test(location.pathname)) return base.replace(page, 'c/') + (asQuery ? '?c=' : '#') + code;
+    return base + (asQuery ? '?c=' : '#c=') + code;
+  }
 
   // 카카오 SDK: 처음 쓸 때만, 무결성 검사를 붙여 불러온다
   var kakaoReady = null;
@@ -262,8 +264,12 @@
     return kakaoReady;
   }
 
+  var shareBack = null;
+  function shareCardCurrent() { shareCard(); }
   function shareCard() {
-    var back = currentCard || readyCard;
+    // 설정을 열었다 닫아 다시 그릴 때도 처음 들어온 화면(결과 등)으로 돌아간다
+    var back = currentCard && currentCard !== shareCardCurrent ? currentCard : (shareBack || readyCard);
+    shareBack = back;
     var payload = ctl.challengePayload();
     if (!payload) return;
     var rec = ctl.lastRecord;
@@ -271,7 +277,6 @@
       '<button type="button" class="icon-btn small card-close" data-act="close" aria-label="' + esc(S.close) + '"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
       '<div class="card-sub">' + esc(S.shareMsg.replace('{h}', rec.height)) + '</div>' +
       '<label class="name-field"><span>' + S.nameLabel + '</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="' + esc(S.namePlaceholder) + '" value="' + esc(ctl.nickname()) + '"></label>' +
-      '<div class="share-note" id="share-note"></div>' +
       (isLocalHost() ? '<div class="card-warn local">' + S.localWarn + '</div>' : '') +
       (kakaoEnabled() ? '<button type="button" class="btn-kakao" data-act="kakao">' + S.kakaoBtn + '</button>' : '') +
       (kakaoEnabled()
@@ -283,21 +288,17 @@
       copy: function () { doShare(false); }
     }, 'share');
     if (kakaoEnabled()) loadKakao().catch(function () { /* 누를 때 다시 시도 */ });
-    currentCard = function () { shareCard(); };
+    currentCard = shareCardCurrent;
     var input = $('nick');
     input.addEventListener('keydown', function (e) { e.stopPropagation(); }); // 이름 입력 중 게임 키 처리 안 함
     input.addEventListener('keyup', function (e) { e.stopPropagation(); });
 
+    // 짧은 링크: 코스·기록·이름만 담는다(고스트 입력 기록은 넣지 않음 → 약 30자)
     function build(asQuery) {
       var p = ctl.challengePayload();
       p.name = ctl.setNickname(input.value);
-      return encodeChallenge(p).then(function (code) {
-        if (code.length > K.Challenge.MAX_LINK_CHARS) { // 너무 길면 고스트 없이
-          p.replay = null; $('share-note').textContent = S.noGhostNote;
-          return encodeChallenge(p);
-        }
-        return code;
-      }).then(function (code) { return challengeLink(code, asQuery); });
+      p.replay = null;
+      return Promise.resolve(challengeLink('r' + K.Challenge.b64url(K.Challenge.toBytes(p)), asQuery));
     }
     // 카카오톡 카드: 문구 + 도전장 썸네일 + "도전 받기" 버튼(긴 링크는 버튼 안에만)
     function doKakao() {
@@ -373,7 +374,7 @@
           ? '<button type="button" class="btn-primary small" data-act="buy" data-id="' + sel.id + '">' + STAR + ' ' + sel.price + ' ' + S.unlockBtn + '</button>'
           : '<em>' + S.needMore.replace('{n}', sel.price - ctl.coins()) + '</em>') + '</div>';
     } else {
-      html += '<div class="card-hint">' + S.coinsHint + '</div>';
+      html += '<div class="card-hint">' + S.coinsHint.replace('{p}', balance.cosmetics.reward.perPassed).replace('{m}', balance.cosmetics.reward.max) + '</div>';
     }
     showCard(html, {
       tile: function (el) {
@@ -407,7 +408,7 @@
       '<div class="card-title">' + S.settingsTitle + '</div>' +
       '<button type="button" class="icon-btn small card-close" data-act="close" aria-label="' + esc(S.close) + '"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
       sw('sfx', S.sfx) +
-      sw('music', S.music, S.musicNone, true) +
+      sw('bgm', S.music) +
       sw('haptics', S.haptics, audio.canVibrate ? '' : S.hapticsNone, !audio.canVibrate) +
       sw('reducedEffects', S.reducedEffects, S.reducedEffectsDetail) +
       '<div class="set-row"><div><b>' + S.language + '</b></div><div class="seg">' + langs + '</div></div>' +
@@ -583,6 +584,9 @@
     var a0 = ab.ascent.baseSpeed, a1 = a0 + ab.ascent.maxIncrease;
     var sn = Math.max(0, Math.min(1, (K.Simulation.currentSpeed(run, ab) - a0) / Math.max(1, a1 - a0)));
     audio.setWind(ctl.state === 'PLAYING' && !tut ? 0.25 + sn * 0.75 : 0);
+    // 배경음악: 플레이 중에는 속도에 따라 빨라지고, 멈춘 동안은 먹먹하게, 실패 순간에는 끊는다
+    var st = ctl.state;
+    audio.setMusic(st === 'PLAYING' ? 'play' : st === 'DEAD' ? 'off' : st === 'READY' || st === 'RESULT' ? 'menu' : 'muffled', tut ? 0 : sn);
     if (hudCache.xpOn !== !!gs) { hudCache.xpOn = !!gs; ui.xpbar.hidden = !gs; }
     if (gs) { var xpw = Math.min(100, 100 * gs.xp / gs.xpToNext).toFixed(1) + '%'; if (hudCache.xpw !== xpw) { hudCache.xpw = xpw; ui.xpfill.style.width = xpw; } }
     var pct = Math.min(100, Math.floor(run.energy / ab.energy.failAt * 100)); // 한계 대비 비율(강철 폐면 한계 120%)

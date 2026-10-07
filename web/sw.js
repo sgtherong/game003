@@ -2,7 +2,7 @@
 // 전략: 네트워크 우선 + 캐시 대체. 온라인이면 항상 최신 파일을 받고 캐시를 갱신하며, 오프라인이면 캐시로 실행한다.
 // 게임 실행 중 서버 통신은 없다(기록·설정은 기기 저장소).
 'use strict';
-var CACHE = 'kkuk-shell-v8';
+var CACHE = 'kkuk-shell-v9';
 var SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
   'share-config.js', 'strings.ko.js', 'strings.en.js', 'audio.js', 'skins.js', 'view.js', 'app.js',

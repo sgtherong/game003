@@ -177,10 +177,10 @@
     "note": "r1.1: slower start (78→74), higher top speed (122→130) reached after 40 gates. Initial values."
   },
   "cosmetics": {
-    "note": "Spec 16.2: cosmetic-only skins (no stat/hitbox difference). Earned per completed run: min(max, floor(passed / perPassed)). Prices are initial test values, not market data.",
+    "note": "Spec 16.2: cosmetic-only skins (no stat/hitbox difference). Earned per completed run: min(max, floor(passed / perPassed)). 2026-10-07: 16 skins, harder to earn (perPassed 3→5, max 20→12, prices raised ~1.6-5x). Prices are initial test values, not market data.",
     "reward": {
-      "perPassed": 3,
-      "max": 20
+      "perPassed": 5,
+      "max": 12
     },
     "skins": [
       {
@@ -189,31 +189,63 @@
       },
       {
         "id": "slime",
-        "price": 30
-      },
-      {
-        "id": "orange",
         "price": 50
       },
       {
-        "id": "watermelon",
+        "id": "orange",
         "price": 80
       },
       {
+        "id": "watermelon",
+        "price": 120
+      },
+      {
+        "id": "strawberry",
+        "price": 160
+      },
+      {
         "id": "puffer",
-        "price": 110
-      },
-      {
-        "id": "fur",
-        "price": 150
-      },
-      {
-        "id": "moon",
         "price": 200
       },
       {
+        "id": "bee",
+        "price": 250
+      },
+      {
+        "id": "panda",
+        "price": 300
+      },
+      {
+        "id": "fur",
+        "price": 360
+      },
+      {
+        "id": "donut",
+        "price": 420
+      },
+      {
+        "id": "snow",
+        "price": 500
+      },
+      {
+        "id": "moon",
+        "price": 600
+      },
+      {
         "id": "glass",
-        "price": 260
+        "price": 720
+      },
+      {
+        "id": "lava",
+        "price": 860
+      },
+      {
+        "id": "galaxy",
+        "price": 1050
+      },
+      {
+        "id": "gold",
+        "price": 1300
       }
     ]
   },
