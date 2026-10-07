@@ -2,7 +2,7 @@
   "name": "kkuk",
   "version": "0.9.0",
   "private": true,
-  "description": "꾹! — R0 기준 재현 + R1 출시 규칙 모듈과 웹 실행기",
+  "description": "Boing! (가칭 꾹!) — R0 기준 재현 + R1 출시 규칙 모듈과 웹 실행기",
   "engines": {
     "node": ">=18"
   },

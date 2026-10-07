@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<title>꾹! 썸네일</title>
+<title>Boing! 썸네일</title>
 <!-- 공유 미리보기 이미지(1200×630) 원본. node tools/make-thumbnail.js 가 이 페이지를 찍어 web/og-image.png 로 저장한다. -->
 <style>
   html, body { margin: 0; width: 1200px; height: 630px; overflow: hidden; }
@@ -116,9 +116,11 @@
   }
   if (!challenge) {
     KKUK.Skins.paint('base', { ctx: ctx, x: 128, y: 150, r: 52, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 1, blink: false, expanded: false });
-    ctx.font = '900 150px "Malgun Gothic", sans-serif';
-    ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText('꾹!', 206, 210);
-    ctx.fillStyle = '#2a1626'; ctx.fillText('꾹!', 200, 202);
+    // 게임 이름(글로벌 이름). 오른쪽 게임 장면(x≈650~)을 침범하지 않도록 폭에 맞춰 크기 조절
+    var TITLE = 'Boing!', size = 132;
+    do { ctx.font = '900 ' + size + 'px "Segoe UI Black", "Arial Black", "Malgun Gothic", sans-serif'; size -= 4; } while (ctx.measureText(TITLE).width > 420 && size > 60);
+    ctx.fillStyle = 'rgba(60,20,20,0.18)'; ctx.fillText(TITLE, 206, 206);
+    ctx.fillStyle = '#2a1626'; ctx.fillText(TITLE, 200, 198);
     ctx.font = '700 40px "Malgun Gothic", sans-serif'; ctx.fillStyle = '#3d2233';
     ctx.fillText('누르면 작아지고,', 76, 300);
     ctx.fillText('떼면 튀어 올라요', 76, 352);
@@ -130,8 +132,10 @@
   } else {
     // 봉투 모양 배지 + 큰 제목
     ctx.save(); ctx.translate(76, 70);
-    ctx.fillStyle = '#2a1626'; rr(0, 0, 250, 64, 32); ctx.fill();
-    ctx.fillStyle = '#ffd34d'; ctx.font = '800 30px "Malgun Gothic", sans-serif'; ctx.fillText('꾹! 도전장', 64, 43);
+    ctx.font = '800 30px "Malgun Gothic", sans-serif';
+    var badgeW = ctx.measureText('Boing! 도전장').width + 90;
+    ctx.fillStyle = '#2a1626'; rr(0, 0, badgeW, 64, 32); ctx.fill();
+    ctx.fillStyle = '#ffd34d'; ctx.fillText('Boing! 도전장', 64, 43);
     ctx.strokeStyle = '#ffd34d'; ctx.lineWidth = 3.5; ctx.lineJoin = 'round';
     rr(20, 18, 34, 26, 4); ctx.stroke(); ctx.beginPath(); ctx.moveTo(22, 21); ctx.lineTo(37, 33); ctx.lineTo(52, 21); ctx.stroke();
     ctx.restore();

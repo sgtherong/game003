@@ -1,6 +1,6 @@
 {
-  "name": "꾹! — 누르고 튀어 오르기",
-  "short_name": "꾹!",
+  "name": "Boing! — 누르고 튀어 오르기",
+  "short_name": "Boing!",
   "description": "누른 채 드래그해 몸을 압축하고, 손을 떼 반동으로 끝없이 올라가는 게임",
   "lang": "ko",
   "start_url": "./",

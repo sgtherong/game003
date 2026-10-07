@@ -4,7 +4,7 @@
   root.KKUK.stringsByLang = root.KKUK.stringsByLang || {};
   root.KKUK.stringsByLang.ko = root.KKUK.strings = {
     langName: '한국어',
-    title: '꾹!',
+    title: 'Boing!',
     tagline: '누르면 작아지고, 떼면 튀어 올라요',
     stepPress: '누르기', stepPressDetail: '몸을 압축',
     stepDrag: '드래그', stepDragDetail: '좌우로 이동',
@@ -104,11 +104,11 @@
     challengeSend: '도전장 보내기', challengeBack: '되받아치기',
     challengeTitle: '도전장 보내기',
     nameLabel: '내 이름(선택)', namePlaceholder: '친구에게 보일 이름',
-    shareMsg: '꾹!에서 {h} m 올라갔어. 같은 코스로 이겨 볼래?',
+    shareMsg: 'Boing!에서 {h} m 올라갔어. 같은 코스로 이겨 볼래?',
     shareBtn: '보내기', copyBtn: '링크 복사',
     kakaoBtn: '카카오톡으로 보내기', otherBtn: '다른 앱으로 보내기',
     kakaoFail: '카카오톡 공유를 열지 못했어요. 다른 앱으로 보내기를 써 주세요',
-    cardTitleNamed: '{name}님의 도전장 · {h} m', cardTitle: '꾹! 도전장 · {h} m',
+    cardTitleNamed: '{name}님의 도전장 · {h} m', cardTitle: 'Boing! 도전장 · {h} m',
     cardDesc: '같은 코스에서 나를 이겨 봐! 고스트와 1:1 대결', cardButton: '도전 받기',
     copied: '링크를 복사했어요', shared: '보냈어요', shareFail: '복사하지 못했어요. 길게 눌러 직접 복사해 주세요',
     noGhostNote: '판이 길어 고스트 없이 기록만 보내요',

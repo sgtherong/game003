@@ -4,7 +4,7 @@
   root.KKUK.stringsByLang = root.KKUK.stringsByLang || {};
   root.KKUK.stringsByLang.en = {
     langName: 'English',
-    title: 'Kkuk!',
+    title: 'Boing!',
     tagline: 'Press to shrink. Let go to bounce back.',
     stepPress: 'Press', stepPressDetail: 'Squeeze',
     stepDrag: 'Drag', stepDragDetail: 'Move sideways',
@@ -104,11 +104,11 @@
     challengeSend: 'Challenge a friend', challengeBack: 'Fire back',
     challengeTitle: 'Send a challenge',
     nameLabel: 'Your name (optional)', namePlaceholder: 'Shown to your friend',
-    shareMsg: 'I climbed {h} m in Kkuk! Can you beat me on the same course?',
+    shareMsg: 'I climbed {h} m in Boing! Can you beat me on the same course?',
     shareBtn: 'Send', copyBtn: 'Copy link',
     kakaoBtn: 'Send via KakaoTalk', otherBtn: 'Send with another app',
     kakaoFail: 'Could not open KakaoTalk sharing. Please use another app',
-    cardTitleNamed: "{name}'s challenge · {h} m", cardTitle: 'Kkuk! challenge · {h} m',
+    cardTitleNamed: "{name}'s challenge · {h} m", cardTitle: 'Boing! challenge · {h} m',
     cardDesc: 'Beat me on the same course — 1:1 with my ghost', cardButton: 'Accept',
     copied: 'Link copied', shared: 'Sent', shareFail: 'Could not copy. Long-press to copy manually',
     noGhostNote: 'Run is long, sending the score without a ghost',
