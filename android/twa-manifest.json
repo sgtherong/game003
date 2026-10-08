@@ -1,0 +1,43 @@
+{
+  "packageId": "io.github.sgtherong.boing",
+  "host": "sgtherong.github.io",
+  "name": "Boing!",
+  "launcherName": "Boing!",
+  "display": "standalone",
+  "orientation": "portrait",
+  "themeColor": "#F6ECE0",
+  "themeColorDark": "#0D1626",
+  "navigationColor": "#F6ECE0",
+  "navigationColorDark": "#0D1626",
+  "navigationDividerColor": "#00000000",
+  "navigationDividerColorDark": "#00000000",
+  "backgroundColor": "#FBF4EA",
+  "enableNotifications": false,
+  "startUrl": "/game003/web/",
+  "iconUrl": "https://sgtherong.github.io/game003/web/icons/icon-512.png",
+  "maskableIconUrl": "https://sgtherong.github.io/game003/web/icons/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "boing"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://sgtherong.github.io/game003/web/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": false,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://sgtherong.github.io/game003/web/",
+  "minSdkVersion": 21,
+  "fingerprints": [],
+  "additionalTrustedOrigins": [],
+  "retainedBundles": [],
+  "appVersion": "1.0.0"
+}

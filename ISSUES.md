@@ -194,3 +194,12 @@ game001(SwapStep)과 같은 방식으로 바꿨다: 링크에는 **코스 시드
 - 검사값은 손으로 고친 링크를 거르는 정도(game001과 같은 수준)이며 기록 자체를 증명하지 않는다. 이전의 "입력 재계산 검증(✓ 기록 확인됨)"은 이전 형식의 긴 링크를 열 때만 동작한다(읽기 호환 유지).
 - 서버가 없으므로 미리보기 제목·이미지는 모든 도전장이 같다. 누가 몇 m인지는 공유 문구에 들어간다.
 - 도전장 썸네일의 "고스트와 1:1" 문구를 "같은 코스 1:1"로 바꿔 다시 생성했다(`node tools/make-thumbnail.js challenge`).
+
+## 다국어 18개 · Google Play 등록 준비 (2026-10-08)
+
+- 언어: 한국어, English, 日本語, 简体中文, 繁體中文, Español, Português(브라질), Français, Deutsch, Italiano, Nederlands, Polski, Русский, Türkçe, Bahasa Indonesia, Tiếng Việt, ไทย, हिन्दी. 오른쪽에서 왼쪽으로 쓰는 언어(아랍어 등)는 화면 배치 작업이 필요해 제외.
+- 처음 실행하면 기기 언어를 따른다(`Save.pickLanguage`, 없으면 영어). 설정의 언어는 목록 상자로 고른다.
+- `tools/check-strings.js`(테스트에 포함): 모든 언어가 영어와 같은 키·자리표시자, 스토어 문구 길이 제한.
+- **번역은 AI 초안이다.** 원어민 검수 전. 주의할 곳: 폴란드어·러시아어·힌디어 공유 문구의 남성형 동사, 스페인어·포르투갈어·프랑스어의 성장 모드 이름(Evolución 등)과 진화(Mutación 등) 구분, 폴란드어·러시아어 복수형을 피한 "이름: {n}" 문형.
+- 스토어 자료: `store/`(README 참고) — 18개 언어 등록 문구, 그래픽 이미지, 언어별 스크린샷 5장, 개인정보처리방침 `privacy/`.
+- 안드로이드: `android/twa-manifest.json`(packageId `io.github.sgtherong.boing`). 빌드 도구(JDK·Android SDK)와 서명 키는 아직 없음.

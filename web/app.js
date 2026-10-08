@@ -23,6 +23,11 @@
   };
 
   var ctl = K.GameController.createGameController({ balance: balance, store: storage });
+  // 처음 실행이면 기기 언어를 따른다(이후에는 설정에서 고른 언어 유지)
+  if (ctl.loadInfo.source === 'new') {
+    var lang = K.Save.pickLanguage(navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language]);
+    if (K.stringsByLang[lang]) ctl.updateSettings({ language: lang });
+  }
   var S = K.stringsByLang[ctl.profile.settings.language] || K.stringsByLang.ko;
   var view = K.View.createView(ui.canvas, balance, S);
   var audio = K.AudioHaptics.create(function () { return ctl.profile.settings; });
@@ -401,9 +406,10 @@
         '<button type="button" class="switch" role="switch" aria-label="' + esc(label) + '" aria-checked="' + (!!st[key] && !disabled) + '"' +
         (disabled ? ' disabled' : ' data-act="toggle" data-key="' + key + '"') + '></button></div>';
     }
-    var langs = Object.keys(K.stringsByLang).map(function (l) {
-      return '<button type="button" data-act="lang" data-lang="' + l + '" aria-pressed="' + (st.language === l) + '">' + K.stringsByLang[l].langName + '</button>';
-    }).join('');
+    // 언어가 많아 목록 상자로 고른다(설정 순서는 save.js의 LANGUAGES)
+    var langs = '<select class="lang-select" id="lang-select" aria-label="' + esc(S.language) + '">' + K.Save.LANGUAGES.filter(function (l) { return K.stringsByLang[l]; }).map(function (l) {
+      return '<option value="' + l + '"' + (st.language === l ? ' selected' : '') + '>' + esc(K.stringsByLang[l].langName) + '</option>';
+    }).join('') + '</select>';
     showCard(
       '<div class="card-title">' + S.settingsTitle + '</div>' +
       '<button type="button" class="icon-btn small card-close" data-act="close" aria-label="' + esc(S.close) + '"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
@@ -411,7 +417,7 @@
       sw('bgm', S.music) +
       sw('haptics', S.haptics, audio.canVibrate ? '' : S.hapticsNone, !audio.canVibrate) +
       sw('reducedEffects', S.reducedEffects, S.reducedEffectsDetail) +
-      '<div class="set-row"><div><b>' + S.language + '</b></div><div class="seg">' + langs + '</div></div>' +
+      '<div class="set-row"><div><b>' + S.language + '</b></div>' + langs + '</div>' +
       '<details class="privacy"><summary>' + S.privacy + '</summary>' + S.privacyBody + '</details>' +
       (ctl.state === 'READY' || ctl.state === 'RESULT'
         ? '<div class="set-row"><div><b>' + S.replayTutorial + '</b></div><button type="button" class="btn-ghost inline" data-act="tutorial">' + S.start + '</button></div>' : ''),
@@ -424,11 +430,16 @@
           settingsCard(); currentCard = back;
           var again = ui.card.querySelector('[data-key="' + key + '"]'); if (again) again.focus({ preventScroll: true });
         },
-        lang: function (el) { ctl.updateSettings({ language: el.getAttribute('data-lang') }); applyLanguage(); settingsCard(); currentCard = back; },
         tutorial: function () { ctl.startTutorial(); afterAction(); },
         close: function () { back(); }
       }, 'settings');
     currentCard = back;
+    var sel = $('lang-select');
+    sel.addEventListener('change', function () {
+      ctl.updateSettings({ language: sel.value }); applyLanguage(); settingsCard(); currentCard = back;
+      var again = $('lang-select'); if (again) again.focus({ preventScroll: true });
+    });
+    sel.addEventListener('keydown', function (e) { e.stopPropagation(); }); // 목록에서 방향키는 게임 키가 아님
   }
 
   function applySettings() {

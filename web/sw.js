@@ -2,10 +2,12 @@
 // 전략: 네트워크 우선 + 캐시 대체. 온라인이면 항상 최신 파일을 받고 캐시를 갱신하며, 오프라인이면 캐시로 실행한다.
 // 게임 실행 중 서버 통신은 없다(기록·설정은 기기 저장소).
 'use strict';
-var CACHE = 'kkuk-shell-v9';
+var CACHE = 'kkuk-shell-v10';
 var SHELL = [
   './', 'index.html', 'style.css', 'manifest.webmanifest',
-  'share-config.js', 'strings.ko.js', 'strings.en.js', 'audio.js', 'skins.js', 'view.js', 'app.js',
+  'share-config.js',
+  'strings.ko.js', 'strings.en.js', 'strings.ja.js', 'strings.zh-Hans.js', 'strings.zh-Hant.js', 'strings.es.js', 'strings.pt.js', 'strings.fr.js', 'strings.de.js', 'strings.it.js', 'strings.nl.js', 'strings.pl.js', 'strings.ru.js', 'strings.tr.js', 'strings.id.js', 'strings.vi.js', 'strings.th.js', 'strings.hi.js',
+  'audio.js', 'skins.js', 'view.js', 'app.js',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-maskable-512.png', 'icons/apple-touch-icon.png',
   '../src/balance-r1.js', '../src/rng.js', '../src/collision.js', '../src/generator.js', '../src/simulation.js',
   '../src/input-adapter.js', '../src/replay.js', '../src/save.js', '../src/tutorial.js', '../src/growth.js', '../src/feats.js', '../src/missions.js', '../src/challenge.js', '../src/game-controller.js'

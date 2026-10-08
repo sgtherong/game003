@@ -1,0 +1,20 @@
+{
+  "lang": "tr",
+  "playLocale": "tr-TR",
+  "title": "Boing! Sıkış ve Zıpla",
+  "short": "Dar geçitlerden sıkışarak geç, gökyüzüne zıpla. Tek parmakla oynanan arcade.",
+  "full": "Basılı tut, küçül. Bırak, zıpla.\n\nBoing! tek parmakla oynanan dikey bir arcade oyunudur. Küçük jöleni sıkıştırmak için basılı tut, geçitle hizalanmak için sürükle ve geçince bırak — biriken enerji seni yukarı fırlatır. Çok uzun tutarsan patlarsın!\n\n• Öğrenmesi kolay: bas, sürükle, bırak\n• Her geçit anlık bir karar: kısa, uzun ve çift geçitler\n• Mücadele modu: saf beceri, hız sürekli artar\n• Gelişim modu: küre topla, seviye atla; 9 yetenek, 2 evrim ve riskli lanetlerle kombo kur\n• Günlük meydan okuma: bugün herkes için aynı parkur, kendi en iyi hayaletinle yarış\n• Arkadaşına meydan oku: kısa bir bağlantı gönder, birebir aynı parkurda düello yap\n• Görevler ve yıldızlarla açılan 16 sevimli görünüm\n• Şafaktan kutup ışığına beş gökyüzü bölgesi\n• Çevrimdışı çalışır; hesap yok, reklam yok, takip yok\n• Efektleri azaltma seçeneği ve titreşim kontrolü\n\nSen ne kadar yükseğe zıplayabilirsin?",
+  "privacy": {
+    "title": "Gizlilik Politikası",
+    "updated": "Son güncelleme: 8 Ekim 2026",
+    "body": [
+      "Boing! kişisel bilgi toplamaz, sunuculara hiçbir veri göndermez ve verileri kimseyle paylaşmaz.",
+      "Rekorların, ayarların, yıldızların ve görünümlerin yalnızca cihazında saklanır. Uygulamayı kaldırmak veya verilerini temizlemek bunları siler.",
+      "Hesap, reklam, analiz veya takip yoktur.",
+      "Bir meydan okuma gönderdiğinde bağlantı yalnızca parkur numarasını, skorunu ve girmeyi seçtiğin adı (isteğe bağlı) içerir. Yalnızca seçtiğin uygulama (ör. bir mesajlaşma uygulaması) üzerinden paylaşılır ve bize asla gönderilmez.",
+      "Titreşim ve ses yalnızca oyun içi geri bildirim için kullanılır ve Ayarlar’dan kapatılabilir.",
+      "Bu politika oyun değiştikçe değişebilir; yukarıdaki tarih güncellenir."
+    ],
+    "contact": "İletişim"
+  }
+}

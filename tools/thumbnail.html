@@ -18,6 +18,14 @@
 (function () {
   var cv = document.getElementById('c'), ctx = cv.getContext('2d');
   var W = 1200, H = 630;
+  // ?v=feature → Google Play 그래픽 이미지(1024×500): 같은 그림을 폭에 맞춰 줄이고 위아래를 조금 자른다
+  if (/[?&]v=feature/.test(location.search)) {
+    cv.width = 1024; cv.height = 500;
+    document.documentElement.style.width = document.body.style.width = '1024px';
+    document.documentElement.style.height = document.body.style.height = '500px';
+    var fk = 1024 / 1200;
+    ctx.setTransform(fk, 0, 0, fk, 0, -(H * fk - 500) / 2);
+  }
   function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
 
   // ── 배경: 노을 하늘 ──

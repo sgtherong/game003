@@ -1,0 +1,20 @@
+{
+  "lang": "es",
+  "playLocale": "es-ES",
+  "title": "Boing! Encoge y rebota",
+  "short": "Encógete para pasar por huecos estrechos y rebota hasta el cielo. Con un dedo.",
+  "full": "Pulsa para encoger. Suelta para rebotar.\n\nBoing! es un arcade vertical que se juega con un solo dedo. Mantén pulsado para encoger a tu pequeña gelatina, arrastra para alinearte con el hueco y suelta cuando lo hayas cruzado: la energía acumulada te lanza hacia arriba. Si aprietas demasiado, ¡explotas!\n\n• Fácil de aprender: pulsa, arrastra, suelta\n• Cada hueco es una decisión al instante: huecos rápidos, largos y dobles\n• Modo Reto: pura habilidad, la velocidad no para de subir\n• Modo Evolución: recoge orbes, sube de nivel y crea combos con 9 habilidades, 2 mutaciones y maldiciones arriesgadas\n• Reto diario: el mismo recorrido para todos hoy, compite contra el fantasma de tu mejor partida\n• Reta a un amigo: envía un enlace corto y compitan en el mismo recorrido\n• Misiones y 16 aspectos adorables que desbloquear con estrellas\n• Cinco zonas del cielo, del alba a la aurora\n• Funciona sin conexión, sin cuenta, sin anuncios, sin rastreo\n• Opción para reducir efectos y control de vibración\n\n¿Hasta dónde puedes rebotar?",
+  "privacy": {
+    "title": "Política de privacidad",
+    "updated": "Última actualización: 8 de octubre de 2026",
+    "body": [
+      "Boing! no recopila información personal, no envía ningún dato a servidores y no comparte datos con nadie.",
+      "Tus récords, ajustes, estrellas y aspectos se guardan solo en tu dispositivo. Si desinstalas la app o borras sus datos, se eliminan.",
+      "No hay cuentas, anuncios, analíticas ni rastreo.",
+      "Cuando envías un reto, el enlace contiene solo el número de recorrido, tu puntuación y el nombre que decidas escribir (opcional). Solo se comparte a través de la app que elijas, como una app de mensajería, y nunca se nos envía.",
+      "La vibración y el sonido se usan solo como respuesta del juego y se pueden desactivar en Ajustes.",
+      "Esta política puede cambiar si cambia el juego; la fecha de arriba se actualizará."
+    ],
+    "contact": "Contacto"
+  }
+}

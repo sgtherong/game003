@@ -14,7 +14,8 @@
   var BACKUP_KEY = 'kkuk.profile.backup';
   var INPUT_MODES = ['touch', 'keyboard', 'mixed'];
   var KNOWN_COSMETICS = ['base']; // registerCosmetics()로 설정의 스킨 목록을 등록한다
-  var LANGUAGES = ['ko', 'en'];
+  // 지원 언어(설정 화면 표시 순서). web/strings.<코드>.js 와 일치해야 한다(tools/check-strings.js)
+  var LANGUAGES = ['ko', 'en', 'ja', 'zh-Hans', 'zh-Hant', 'es', 'pt', 'fr', 'de', 'it', 'nl', 'pl', 'ru', 'tr', 'id', 'vi', 'th', 'hi'];
   var MAX_HEIGHT = 1e7;   // 비정상 값 차단용 상한
   var MAX_COUNT = 1e6;
 
@@ -203,8 +204,23 @@
     return { read: function (k) { return k in data ? data[k] : null; }, write: function (k, v) { data[k] = String(v); }, data: data };
   }
 
+  // 기기 언어 목록(navigator.languages)에서 지원 언어를 고른다. 없으면 영어.
+  // 중국어는 번체(대만·홍콩·마카오, 또는 Hant 표기)와 간체를 나눈다.
+  function pickLanguage(tags) {
+    var list = Array.isArray(tags) ? tags : [tags];
+    for (var i = 0; i < list.length; i++) {
+      var t = String(list[i] || '').toLowerCase();
+      if (!t) continue;
+      var base = t.split(/[-_]/)[0];
+      if (base === 'zh') return /hant|-tw|-hk|-mo|_tw|_hk|_mo/.test(t) ? 'zh-Hant' : 'zh-Hans';
+      if (LANGUAGES.indexOf(base) >= 0) return base;
+      if (base === 'in') return 'id'; // 예전 인도네시아어 코드
+    }
+    return 'en';
+  }
+
   return {
-    SCHEMA_VERSION: SCHEMA_VERSION, PRIMARY_KEY: PRIMARY_KEY, BACKUP_KEY: BACKUP_KEY, INPUT_MODES: INPUT_MODES,
+    SCHEMA_VERSION: SCHEMA_VERSION, LANGUAGES: LANGUAGES, pickLanguage: pickLanguage, PRIMARY_KEY: PRIMARY_KEY, BACKUP_KEY: BACKUP_KEY, INPUT_MODES: INPUT_MODES,
     defaultProfile: defaultProfile, recordKey: recordKey, registerCosmetics: registerCosmetics, registerMissions: registerMissions, validateSave: validateSave, serializeSave: serializeSave,
     load: load, save: save, getRecord: getRecord, applyRunResult: applyRunResult, memoryStore: memoryStore
   };

@@ -1,0 +1,92 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boing! 스토어 스크린샷 무대</title>
+<!-- node tools/make-shots.js 가 로컬 서버로 이 페이지를 열어 장면별로 찍는다. ?scene=menu|play|growth|skins|duel&lang=ko
+     실제 게임(web/)을 같은 출처 iframe으로 열고, 디버그 핸들(KKUK.debug)로 장면을 만든다. 게임 코드는 바꾸지 않는다. -->
+<style>html, body { margin: 0; height: 100%; overflow: hidden; background: #fbf4ea; } iframe { display: block; width: 100%; height: 100%; border: 0; }</style>
+<script>var module = { exports: {} };</script>
+<script src="../tests/autopilot.js"></script>
+</head>
+<body>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var scene = q.get('scene') || 'menu', lang = q.get('lang') || 'en';
+  var createAutopilot = module.exports.createAutopilot, decisionToOps = module.exports.decisionToOps;
+
+  // 장면용 프로필: 튜토리얼 끝, 별·외형 몇 개, 언어
+  localStorage.clear();
+  localStorage.setItem('kkuk.profile', JSON.stringify({
+    schemaVersion: 1, tutorialCompleted: true,
+    settings: { sfx: true, bgm: true, haptics: true, reducedEffects: false, language: lang },
+    records: {}, lastInputMode: 'touch',
+    cosmetics: { unlocked: ['base', 'slime', 'strawberry', 'bee', 'panda', 'galaxy'], equipped: scene === 'play' ? 'galaxy' : 'base' },
+    softCurrency: 640, claimedRewardIds: [], missions: { active: [], done: 0, tiers: {} }, daily: null, nickname: ''
+  }));
+
+  var frame = document.createElement('iframe');
+  frame.onload = function () { setTimeout(function () { setup(frame.contentWindow); }, 300); };
+  frame.src = '../web/';
+  document.body.appendChild(frame);
+
+  function driveUntil(w, stop, limitTicks) {
+    var K = w.KKUK, ctl = K.debug.ctl, bal = ctl.activeBalance();
+    var bot = createAutopilot(bal), lastTarget = null;
+    ctl.replaySource = function (tick, run) {
+      var d = bot({ distance: run.distance, x: run.x, energy: run.energy, held: run.logicalHeld, speed: K.Simulation.currentSpeed(run, ctl.activeBalance()), gates: run.gates });
+      var ops = decisionToOps(d, run.logicalHeld, lastTarget);
+      lastTarget = d.held ? d.targetX : null;
+      return { ops: ops, axis: 0 };
+    };
+    for (var i = 0; i < limitTicks && ctl.state === 'PLAYING'; i++) {
+      ctl.advance(1 / 120);
+      if (stop(ctl)) break;
+    }
+    ctl.replaySource = null;
+  }
+
+  function setup(w) {
+    var K = w.KKUK, ctl = K.debug.ctl, doc = w.document;
+    // 헤드리스 가상 시간에서는 CSS 전환이 끝나지 않을 수 있어 끈다(사라지는 카드가 반투명으로 남는 문제)
+    var st = doc.createElement('style'); st.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }';
+    doc.head.appendChild(st);
+    function click(sel) { var el = doc.querySelector(sel); if (el) el.click(); }
+    if (scene === 'play') {
+      ctl.start('challenge');
+      driveUntil(w, function (c) {
+        var run = c.run, UPM = c.activeBalance().world.unitsPerMeter;
+        if (run.distance < UPM * 130 || !run.logicalHeld || run.energy < 0.3) return false;
+        return run.gates.some(function (g) { var dz = g.z - run.distance; return dz > 10 && dz < 140; });
+      }, 120 * 120);
+      ctl.state = 'CHOOSING'; // 세계 동결(카드 없이)
+      doc.getElementById('overlay').hidden = true;
+    } else if (scene === 'growth') {
+      ctl.start('growth');
+      driveUntil(w, function (c) { return c.state === 'CHOOSING' && c.growth.level >= 3; }, 120 * 120);
+      // 첫 레벨업에서 멈추면 하나 고르고 다음 레벨업까지
+      for (var k = 0; k < 3 && ctl.state === 'CHOOSING' && ctl.growth.level < 3; k++) {
+        ctl.choose(0); ctl.advance(2);
+        driveUntil(w, function (c) { return c.state === 'CHOOSING'; }, 120 * 120);
+      }
+    } else if (scene === 'skins') {
+      click('[data-act="skins"]');
+      click('[data-id="lava"]');
+    } else if (scene === 'duel') {
+      // 대결 중 화면: 상대 기록선이 보이는 위치까지
+      ctl.acceptChallenge({ seed: 20261008, rulesVersion: 'r1', balanceVersion: ctl.balanceVersion, generatorVersion: ctl.run.generatorVersion, height: 152, passed: 18, name: lang === 'ko' ? '영희' : 'Mia', replay: null, ticks: 0, skin: 'base' }, { status: 'unverified' });
+      ctl.start('versus');
+      var UPM = ctl.activeBalance().world.unitsPerMeter;
+      driveUntil(w, function (c) { return c.run.distance > UPM * 128 && c.run.logicalHeld && c.run.energy > 0.3; }, 120 * 120);
+      ctl.state = 'CHOOSING';
+      doc.getElementById('overlay').hidden = true;
+    }
+    // menu: 시작 화면 그대로(미션·모드)
+    document.title = 'ready';
+  }
+})();
+</script>
+</body>
+</html>

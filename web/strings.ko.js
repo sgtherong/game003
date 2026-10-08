@@ -109,7 +109,7 @@
     kakaoBtn: '카카오톡으로 보내기', otherBtn: '다른 앱으로 보내기',
     kakaoFail: '카카오톡 공유를 열지 못했어요. 다른 앱으로 보내기를 써 주세요',
     cardTitleNamed: '{name}님의 도전장 · {h} m', cardTitle: 'Boing! 도전장 · {h} m',
-    cardDesc: '같은 코스에서 나를 이겨 봐! 고스트와 1:1 대결', cardButton: '도전 받기',
+    cardDesc: '같은 코스에서 나를 이겨 봐! 1:1 대결', cardButton: '도전 받기',
     copied: '링크를 복사했어요', shared: '보냈어요', shareFail: '복사하지 못했어요. 길게 눌러 직접 복사해 주세요',
     localWarn: '지금 주소는 이 PC(같은 Wi-Fi)에서만 열려요. 친구에게 보내려면 게임을 공개 주소(https)에 올려야 해요.',
     incomingTitle: '도전장 도착!',

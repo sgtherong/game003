@@ -1,0 +1,20 @@
+{
+  "lang": "de",
+  "playLocale": "de-DE",
+  "title": "Boing! Quetschen & Hüpfen",
+  "short": "Quetsch dich durch enge Lücken und hüpf hoch hinaus. Arcade mit einem Daumen.",
+  "full": "Drücken zum Schrumpfen. Loslassen zum Abprallen.\n\nBoing! ist ein vertikales Arcade-Spiel für einen Daumen. Halte gedrückt, um deinen kleinen Gelee-Freund zu quetschen, zieh ihn zur Lücke und lass los, sobald du durch bist — die gespeicherte Energie schleudert dich nach oben. Hältst du zu lange, machst du Plopp!\n\n• Schnell gelernt: drücken, ziehen, loslassen\n• Jede Lücke ist eine Blitzentscheidung: kurze, lange und doppelte Lücken\n• Profi-Modus: pures Können, das Tempo steigt immer weiter\n• Wachsen-Modus: sammle Kugeln, steig auf und kombiniere 9 Fähigkeiten, 2 Evolutionen und riskante Flüche\n• Tages-Challenge: heute dieselbe Strecke für alle, tritt gegen deinen besten Geist an\n• Freunde herausfordern: schick einen kurzen Link und duelliert euch auf genau derselben Strecke\n• Missionen und 16 süße Skins, die du mit Sternen freischaltest\n• Fünf Himmelszonen vom Morgen bis zum Polarlicht\n• Offline spielbar, kein Konto, keine Werbung, kein Tracking\n• Option für weniger Effekte und Vibrationssteuerung\n\nWie hoch kommst du?",
+  "privacy": {
+    "title": "Datenschutzerklärung",
+    "updated": "Zuletzt aktualisiert: 8. Oktober 2026",
+    "body": [
+      "Boing! erhebt keine personenbezogenen Daten, sendet keine Daten an Server und gibt keine Daten an Dritte weiter.",
+      "Deine Rekorde, Einstellungen, Sterne und Skins werden nur auf deinem Gerät gespeichert. Wenn du die App deinstallierst oder ihre Daten löschst, werden sie gelöscht.",
+      "Es gibt keine Konten, keine Werbung, keine Analyse und kein Tracking.",
+      "Wenn du eine Herausforderung sendest, enthält der Link nur die Streckennummer, deinen Score und den Namen, den du (optional) eingibst. Er wird nur über die App geteilt, die du auswählst, etwa einen Messenger, und nie an uns gesendet.",
+      "Vibration und Ton dienen nur als Spiel-Feedback und können in den Optionen ausgeschaltet werden.",
+      "Diese Erklärung kann sich ändern, wenn sich das Spiel ändert; das Datum oben wird dann aktualisiert."
+    ],
+    "contact": "Kontakt"
+  }
+}

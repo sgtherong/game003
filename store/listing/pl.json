@@ -1,0 +1,20 @@
+{
+  "lang": "pl",
+  "playLocale": "pl-PL",
+  "title": "Boing! Ściśnij i odbij",
+  "short": "Przeciskaj się przez wąskie szczeliny i odbijaj wysoko. Zręcznościówka na kciuk.",
+  "full": "Wciśnij, by się skurczyć. Puść, by się odbić.\n\nBoing! to pionowa gra zręcznościowa na jeden kciuk. Przytrzymaj, by ścisnąć swoją małą galaretkę, przeciągnij, by trafić w szczelinę, i puść, gdy już przez nią przejdziesz — zgromadzona energia wystrzeli cię w górę. Trzymaj za długo, a pękniesz!\n\n• Łatwa do nauczenia: wciśnij, przeciągnij, puść\n• Każda szczelina to decyzja w ułamku sekundy: krótkie, długie i podwójne\n• Tryb Wyzwanie: czysty skill, tempo ciągle rośnie\n• Tryb Rozwój: zbieraj kule, awansuj i łącz 9 zdolności, 2 ewolucje i ryzykowne klątwy\n• Wyzwanie dnia: dziś ta sama trasa dla wszystkich, ścigaj się z duchem swojego rekordu\n• Wyzwij znajomego: wyślij krótki link i zmierzcie się na dokładnie tej samej trasie\n• Misje i 16 uroczych skórek do odblokowania za gwiazdki\n• Pięć stref nieba od świtu po zorzę\n• Działa offline, bez konta, bez reklam, bez śledzenia\n• Opcja ograniczenia efektów i sterowanie wibracjami\n\nJak wysoko się odbijesz?",
+  "privacy": {
+    "title": "Polityka prywatności",
+    "updated": "Ostatnia aktualizacja: 8 października 2026",
+    "body": [
+      "Boing! nie zbiera danych osobowych, nie wysyła żadnych danych na serwery i nikomu ich nie udostępnia.",
+      "Twoje rekordy, ustawienia, gwiazdki i skórki są przechowywane tylko na Twoim urządzeniu. Odinstalowanie aplikacji lub wyczyszczenie jej danych usuwa je.",
+      "Nie ma kont, reklam, analityki ani śledzenia.",
+      "Gdy wysyłasz wyzwanie, link zawiera tylko numer trasy, Twój wynik i imię, które zdecydujesz się wpisać (opcjonalnie). Jest udostępniany wyłącznie przez wybraną przez Ciebie aplikację, np. komunikator, i nigdy nie trafia do nas.",
+      "Wibracje i dźwięk służą wyłącznie jako informacja zwrotna w grze i można je wyłączyć w Ustawieniach.",
+      "Ta polityka może się zmienić wraz ze zmianami w grze; data powyżej zostanie wtedy zaktualizowana."
+    ],
+    "contact": "Kontakt"
+  }
+}

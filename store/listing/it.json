@@ -1,0 +1,20 @@
+{
+  "lang": "it",
+  "playLocale": "it-IT",
+  "title": "Boing! Schiaccia e rimbalza",
+  "short": "Schiacciati nei varchi stretti e rimbalza fino al cielo. Si gioca con un dito.",
+  "full": "Premi per rimpicciolire. Lascia per rimbalzare.\n\nBoing! è un arcade verticale da giocare con un dito solo. Tieni premuto per schiacciare la tua gelatina, trascina per allinearti al varco e lascia quando l’hai superato: l’energia accumulata ti lancia verso l’alto. Se tieni troppo, scoppi!\n\n• Facile da imparare: premi, trascina, lascia\n• Ogni varco è una decisione al volo: varchi rapidi, lunghi e doppi\n• Modalità Sfida: pura abilità, la velocità continua a salire\n• Modalità Crescita: raccogli sfere, sali di livello e crea combo con 9 poteri, 2 evoluzioni e maledizioni rischiose\n• Sfida giornaliera: lo stesso percorso per tutti oggi, gareggia contro il fantasma del tuo record\n• Sfida un amico: invia un link breve e sfidatevi sullo stesso identico percorso\n• Missioni e 16 skin adorabili da sbloccare con le stelle\n• Cinque zone del cielo, dall’alba all’aurora\n• Funziona offline, senza account, senza pubblicità, senza tracciamento\n• Opzione per ridurre gli effetti e controllo della vibrazione\n\nFin dove riesci a rimbalzare?",
+  "privacy": {
+    "title": "Informativa sulla privacy",
+    "updated": "Ultimo aggiornamento: 8 ottobre 2026",
+    "body": [
+      "Boing! non raccoglie informazioni personali, non invia dati a server e non condivide dati con nessuno.",
+      "I tuoi record, impostazioni, stelle e skin sono salvati solo sul tuo dispositivo. Disinstallando l’app o cancellandone i dati vengono eliminati.",
+      "Non ci sono account, pubblicità, analisi o tracciamento.",
+      "Quando invii una sfida, il link contiene solo il numero del percorso, il tuo punteggio e il nome che hai scelto di inserire (facoltativo). Viene condiviso solo tramite l’app che scegli, come un’app di messaggistica, e non ci viene mai inviato.",
+      "Vibrazione e suono servono solo come feedback di gioco e si possono disattivare in Impostazioni.",
+      "Questa informativa può cambiare quando cambia il gioco; la data qui sopra verrà aggiornata."
+    ],
+    "contact": "Contatti"
+  }
+}

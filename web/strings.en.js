@@ -109,7 +109,7 @@
     kakaoBtn: 'Send via KakaoTalk', otherBtn: 'Send with another app',
     kakaoFail: 'Could not open KakaoTalk sharing. Please use another app',
     cardTitleNamed: "{name}'s challenge · {h} m", cardTitle: 'Boing! challenge · {h} m',
-    cardDesc: 'Beat me on the same course — 1:1 with my ghost', cardButton: 'Accept',
+    cardDesc: 'Beat me on the same course — 1:1 duel', cardButton: 'Accept',
     copied: 'Link copied', shared: 'Sent', shareFail: 'Could not copy. Long-press to copy manually',
     localWarn: 'This address only works on this PC / Wi-Fi. Host the game on a public https address to send it to friends.',
     incomingTitle: 'Challenge received!',

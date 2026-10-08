@@ -320,6 +320,7 @@ require('./pwa-tests.js')(test);
 require('./feats-tests.js')(test);
 require('./daily-tests.js')(test);
 require('./versus-tests.js')(test);
+require('./i18n-tests.js')(test);
 
 // ── 출력 ──────────────────────────────────────────────────
 let fail = 0;

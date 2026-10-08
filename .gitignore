@@ -4,3 +4,13 @@ node_modules/
 *.log
 .DS_Store
 Thumbs.db
+
+# 안드로이드 서명 키·빌드 결과(키는 따로 안전하게 보관)
+*.keystore
+*.jks
+android/app/
+android/build/
+android/.gradle/
+android/*.aab
+android/*.apk
+android/*.idsig

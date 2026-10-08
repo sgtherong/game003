@@ -1,0 +1,20 @@
+{
+  "lang": "fr",
+  "playLocale": "fr-FR",
+  "title": "Boing! Écrase et rebondis",
+  "short": "Écrase-toi dans des passages étroits et rebondis jusqu’au ciel. À un doigt.",
+  "full": "Appuie pour rétrécir. Lâche pour rebondir.\n\nBoing! est un jeu d’arcade vertical qui se joue d’un seul doigt. Maintiens pour écraser ta petite gelée, glisse pour t’aligner sur le passage et lâche une fois de l’autre côté : l’énergie accumulée te propulse vers le haut. Tiens trop longtemps et tu éclates !\n\n• Simple à prendre en main : appuie, glisse, lâche\n• Chaque passage est une décision éclair : passages rapides, longs et doubles\n• Mode Défi : que du skill, la vitesse ne cesse d’augmenter\n• Mode Évolution : ramasse des orbes, monte de niveau et crée des combos avec 9 pouvoirs, 2 mutations et des malédictions risquées\n• Défi du jour : le même parcours pour tout le monde aujourd’hui, affronte le fantôme de ton meilleur score\n• Défie un ami : envoie un lien court et affrontez-vous sur exactement le même parcours\n• Missions et 16 skins mignons à débloquer avec des étoiles\n• Cinq zones du ciel, de l’aube à l’aurore\n• Fonctionne hors ligne, sans compte, sans pub, sans pistage\n• Option pour réduire les effets et réglage de la vibration\n\nJusqu’où peux-tu rebondir ?",
+  "privacy": {
+    "title": "Politique de confidentialité",
+    "updated": "Dernière mise à jour : 8 octobre 2026",
+    "body": [
+      "Boing! ne collecte aucune information personnelle, n’envoie aucune donnée à des serveurs et ne partage de données avec personne.",
+      "Tes records, réglages, étoiles et skins sont stockés uniquement sur ton appareil. Désinstaller l’app ou effacer ses données les supprime.",
+      "Il n’y a ni compte, ni publicité, ni analyse, ni pistage.",
+      "Quand tu envoies un défi, le lien contient seulement le numéro du parcours, ton score et le nom que tu as choisi de saisir (facultatif). Il est partagé uniquement via l’app que tu choisis, comme une messagerie, et ne nous est jamais envoyé.",
+      "La vibration et le son servent uniquement de retour de jeu et peuvent être désactivés dans Réglages.",
+      "Cette politique peut évoluer avec le jeu ; la date ci-dessus sera alors mise à jour."
+    ],
+    "contact": "Contact"
+  }
+}
