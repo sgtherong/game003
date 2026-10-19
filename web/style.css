@@ -1,3 +1,9 @@
+/* 숫자 전용 글꼴: Fredoka Bold(OFL 1.1, web/fonts/OFL.txt)에서 숫자·기호·GO!만 남긴 2.9 KB. 글자는 기기 글꼴 그대로 */
+@font-face {
+  font-family: "Boing Num"; src: url("fonts/boing-num.woff2") format("woff2");
+  font-weight: 600 900; font-display: swap;
+  unicode-range: U+20-21, U+25, U+2B-3A, U+47, U+4F, U+6D, U+78, U+D7;
+}
 :root {
   color-scheme: light dark;
   --page-top: #fbf4ea;
@@ -25,6 +31,7 @@
   --shadow: 0 18px 50px -18px rgba(62, 40, 20, 0.35), 0 2px 6px rgba(62, 40, 20, 0.06);
   --radius-stage: 28px;
   --font: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --font-num: "Boing Num", var(--font);
 }
 @media (prefers-color-scheme: dark) {
   :root {
@@ -625,3 +632,8 @@ body.reduced .logo-svg .lw { animation: none; }
 .share-preview img { height: 150px; width: auto; aspect-ratio: 1080 / 1350; border-radius: 14px; box-shadow: 0 8px 20px -10px rgba(0,0,0,.35); background: var(--track); }
 .share-preview img:not([src]) { visibility: hidden; }
 @media (max-height: 700px) { .share-preview img { height: 110px; } }
+
+/* 큰 숫자는 둥근 숫자 글꼴로(브랜드 느낌, 기기마다 같은 모양) */
+.hud-height, .best-value, .card-title .count, .card-title small, .vs-score, .stat b, .coin-pill, .earned, .m-rew, .new { font-family: var(--font-num); }
+.hud-height, .card-title .count, .vs-score { letter-spacing: 0.01em; }
+.hud-height small, .card-title small { margin-left: 3px; }

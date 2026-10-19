@@ -39,6 +39,8 @@
     var reducedSetting = false; // 설정의 연출 줄이기
     function reduced() { return reducedSetting || !!(reducedMotion && reducedMotion.matches); }
     var FONT = getComputedStyle(document.body).fontFamily;
+    var NUMF = '"Boing Num", ' + FONT;   // 숫자 전용 글꼴(없는 글자는 뒤의 기기 글꼴로)
+    if (document.fonts && document.fonts.load) document.fonts.load('900 40px "Boing Num"').catch(function () { /* 없으면 기기 글꼴 */ });
     var darkTheme = false;
     var Z = null;           // 현재 프레임의 구간 팔레트(혼합 결과)
     var tone = 'light';
@@ -210,7 +212,7 @@
       ctx.save();
       ctx.globalAlpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
       ctx.translate(W / 2, PY - 92 - k * 16); ctx.scale(s, s);
-      ctx.font = '900 46px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.font = '900 46px ' + NUMF; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       ctx.lineJoin = 'round'; ctx.lineWidth = 8; ctx.strokeStyle = Z.dark ? 'rgba(10,14,34,0.55)' : 'rgba(255,255,255,0.9)';
       ctx.strokeText(cueFx.text, 0, 0);
       ctx.fillStyle = colors.body; ctx.fillText(cueFx.text, 0, 0);
@@ -672,7 +674,7 @@
         var k = p.t / 0.7;
         ctx.globalAlpha = 1 - k * k;
         var ps = (p.scale || 1) * (k < 0.12 ? 0.7 + 0.3 * (k / 0.12) + 0.25 * Math.sin(k / 0.12 * Math.PI) : 1);
-        ctx.font = (p.big ? '900 ' + (19 * ps).toFixed(1) + 'px ' : '800 ' + (16 * ps).toFixed(1) + 'px ') + FONT;
+        ctx.font = (p.big ? '900 ' + (19 * ps).toFixed(1) + 'px ' : '800 ' + (16 * ps).toFixed(1) + 'px ') + NUMF;
         ctx.textAlign = 'center';
         ctx.lineWidth = 3; ctx.strokeStyle = 'rgba(0,0,0,0.18)';
         var py = (p.y != null ? p.y - 14 : PY - 52) - k * 34;

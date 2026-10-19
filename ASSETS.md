@@ -7,7 +7,8 @@
 | 공유 미리보기 이미지 `web/og-image.png`, 앱 아이콘 | 게임과 같은 그림 코드로 생성(`tools/thumbnail.html`, `tools/icon.html`). 글자는 로고(손으로 그린 선)만 사용. 기록 공유 이미지도 기기에서 같은 코드로 그림 | 이 프로젝트에서 직접 작성 | 가능(자체 제작). 2026-10-07부터 이미지에 글자를 넣지 않아(언어 공용) 글꼴 사용 조건 문제 없음 |
 | 효과음 | Web Audio 실시간 합성 (`web/audio.js`) | 이 프로젝트에서 직접 작성, 외부 음원 없음 | 가능(자체 제작) |
 | 로고 글씨 | 손으로 그린 둥근 선(inline SVG, `web/app.js`·`web/index.html`) | 이 프로젝트에서 직접 작성, 글꼴 파일 아님 | 가능(자체 제작) |
-| 글꼴 | 기기 시스템 글꼴 (Pretendard·Apple SD Gothic Neo·Malgun Gothic 순으로 설치된 것 사용) | 앱에 포함·배포하지 않음 | 배포하지 않으므로 별도 라이선스 불필요. 글꼴을 앱에 포함하게 되면 그 글꼴의 라이선스를 여기에 기록 |
+| 숫자 글꼴 `web/fonts/boing-num.woff2` (2.9 KB) | Fredoka Bold(가변 글꼴을 굵기 700으로 고정한 뒤 숫자·기호·「GO!」·m·x만 남긴 부분 글꼴, fontTools로 생성). 높이·기록·별·GO!·기록 공유 이미지의 숫자에만 사용(`unicode-range`) | Fredoka Project Authors, https://github.com/google/fonts/tree/main/ofl/fredoka (2026-10-19 받음) | 가능 — SIL Open Font License 1.1. 라이선스 전문 `web/fonts/OFL.txt`를 글꼴과 함께 배포. 예약 글꼴 이름 없음 |
+| 글꼴(그 외 글자) | 기기 시스템 글꼴 (Pretendard·Apple SD Gothic Neo·Malgun Gothic 순으로 설치된 것 사용) | 앱에 포함·배포하지 않음 | 배포하지 않으므로 별도 라이선스 불필요. 글꼴을 앱에 포함하게 되면 그 글꼴의 라이선스를 여기에 기록 |
 | 배경음악 | Web Audio 실시간 합성 8마디 반복곡(C–G–Am–F–C–G–F–G), 자작 멜로디 (`web/audio.js`) | 이 프로젝트에서 직접 작성, 외부 음원 없음 | 가능(자체 제작) |
 
-외부 라이브러리·CDN·폰트 파일을 사용하지 않는다. 새 자산을 추가할 때 이 표에 출처와 라이선스를 먼저 기록한다.
+외부 라이브러리·CDN을 사용하지 않는다. 글꼴 파일은 위 숫자 글꼴 하나뿐이며 앱 안에 포함한다(외부 요청 없음). 새 자산을 추가할 때 이 표에 출처와 라이선스를 먼저 기록한다.

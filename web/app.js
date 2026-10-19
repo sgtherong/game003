@@ -412,7 +412,9 @@
     return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
   }
   function makeShareImage(rec, name) {
-    return logoImage().then(function (logo) {
+    var fontReady = document.fonts && document.fonts.load ? document.fonts.load('900 200px "Boing Num"').catch(function () {}) : Promise.resolve();
+    return Promise.all([logoImage(), fontReady]).then(function (r) {
+      var logo = r[0];
       var W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
       var c = cv.getContext('2d'), Z = K.View.ZONES[Math.floor(rec.height / 100) % K.View.ZONES.length];
       var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, Z.top); g.addColorStop(1, Z.bottom);
@@ -451,16 +453,16 @@
       // 기록 숫자
       var ink = Z.stars > 0.5 ? '#ffffff' : '#1d2833';
       c.textAlign = 'center'; c.textBaseline = 'alphabetic';
-      c.font = '900 210px ' + getComputedStyle(document.body).fontFamily;
+      c.font = '900 210px "Boing Num", ' + getComputedStyle(document.body).fontFamily;
       var num = String(rec.height), nw = c.measureText(num).width;
-      c.font = '800 80px ' + getComputedStyle(document.body).fontFamily; var mw = c.measureText('m').width;
+      c.font = '800 80px "Boing Num", ' + getComputedStyle(document.body).fontFamily; var mw = c.measureText('m').width;
       var x0 = 540 - (nw + 14 + mw) / 2, by = 1140;
       c.lineJoin = 'round'; c.lineWidth = 18; c.strokeStyle = Z.stars > 0.5 ? 'rgba(10,14,34,0.45)' : 'rgba(255,255,255,0.85)';
       c.textAlign = 'left';
-      c.font = '900 210px ' + getComputedStyle(document.body).fontFamily; c.strokeText(num, x0, by); c.fillStyle = ink; c.fillText(num, x0, by);
-      c.font = '800 80px ' + getComputedStyle(document.body).fontFamily; c.strokeText('m', x0 + nw + 14, by); c.fillText('m', x0 + nw + 14, by);
+      c.font = '900 210px "Boing Num", ' + getComputedStyle(document.body).fontFamily; c.strokeText(num, x0, by); c.fillStyle = ink; c.fillText(num, x0, by);
+      c.font = '800 80px "Boing Num", ' + getComputedStyle(document.body).fontFamily; c.strokeText('m', x0 + nw + 14, by); c.fillText('m', x0 + nw + 14, by);
       // 통과 수(아이콘 + 숫자), 이름(있으면)
-      c.textAlign = 'center'; c.font = '800 56px ' + getComputedStyle(document.body).fontFamily;
+      c.textAlign = 'center'; c.font = '800 56px "Boing Num", ' + getComputedStyle(document.body).fontFamily;
       var sub = '▲ ' + rec.passed + (name ? '   ·   ' + name : '');
       c.lineWidth = 12; c.strokeText(sub, 540, 1240); c.fillStyle = ink; c.globalAlpha = 0.85; c.fillText(sub, 540, 1240); c.globalAlpha = 1;
       return new Promise(function (res, rej) { cv.toBlob(function (b) { if (b) res(b); else rej(new Error('blob')); }, 'image/jpeg', 0.9); }); // JPEG: 메신저로 보내기 가볍게(PNG의 약 1/4)
