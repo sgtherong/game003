@@ -177,7 +177,7 @@
       } else if (ev.type === 'start') {
         effects = { waves: [], pops: [], sparks: [], passGlow: {}, impact: null, rings: [], flash: null, edge: null, confetti: [] };
         cam = { trauma: 0, kick: 0, kickV: 0, zoom: 0 };
-        nearStreak = 0; lastPassNear = true;
+        nearStreak = 0; lastPassNear = true; cueFx = null;
         trail = []; banner = null; lastZoneIndex = 0;
       }
     }
@@ -195,7 +195,26 @@
       }
     }
 
+    // 짧은 큰 글자 신호(판 시작 'GO!'): 캐릭터 위에서 커졌다 사라진다
+    var cueFx = null;
+    function cue(text) { cueFx = { t: 0, text: text }; }
+    function drawCue() {
+      if (!cueFx) return;
+      var k = cueFx.t / 0.8;
+      if (k >= 1) { cueFx = null; return; }
+      var s = reduced() ? 1 : k < 0.18 ? 0.4 + 0.75 * (k / 0.18) : 1.15 - 0.15 * Math.min(1, (k - 0.18) / 0.2);
+      ctx.save();
+      ctx.globalAlpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+      ctx.translate(W / 2, PY - 92 - k * 16); ctx.scale(s, s);
+      ctx.font = '900 46px ' + FONT; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.lineJoin = 'round'; ctx.lineWidth = 8; ctx.strokeStyle = Z.dark ? 'rgba(10,14,34,0.55)' : 'rgba(255,255,255,0.9)';
+      ctx.strokeText(cueFx.text, 0, 0);
+      ctx.fillStyle = colors.body; ctx.fillText(cueFx.text, 0, 0);
+      ctx.restore();
+    }
+
     function tickEffects(dt, frozen) {
+      if (cueFx && !frozen) cueFx.t += dt;
       if (banner && !frozen) { banner.t += dt; if (banner.t > 2.4) banner = null; }
       // 카메라: 흔들림은 서서히 줄고, 반동 밀림은 스프링으로 제자리로
       cam.trauma = Math.max(0, cam.trauma - dt * 1.5);
@@ -516,6 +535,14 @@
       }
     }
 
+    // HUD 자리(세계 y<0)를 하늘색으로 옅게 덮어, 지나가는 돌판 위에서도 높이·버튼이 읽히게 한다
+    function drawHudScrim() {
+      if (VT > -4) return;
+      var g = ctx.createLinearGradient(0, VT, 0, 16);
+      g.addColorStop(0, alpha(Z.top, 0.86)); g.addColorStop(0.7, alpha(Z.top, 0.55)); g.addColorStop(1, alpha(Z.top, 0));
+      ctx.fillStyle = g; ctx.fillRect(XL, VT, XR - XL, 16 - VT);
+    }
+
     // 화면 고정 연출(카메라 흔들림 밖): 통과 순간 양옆 발광, 실패 순간 번쩍임, 색종이
     function drawScreenFx() {
       if (effects.edge) {
@@ -760,16 +787,18 @@
       drawEnergyRing(ctl);
       drawEffects(run);
       ctx.restore();
+      drawHudScrim();
       drawScreenFx();
       drawVignette();
       drawBanner();
+      drawCue();
       drawCountdown(ctl);
     }
 
     return {
       render: render, onEvent: onEvent, resize: resize, readPalette: readPalette,
       worldWidthCss: function () { return W * KC; },
-      celebrate: celebrate,   // 드래그 배율용: 세계 폭이 차지하는 CSS 너비
+      celebrate: celebrate, cue: cue,   // 드래그 배율용: 세계 폭이 차지하는 CSS 너비
       setStrings: function (s) { strings = s; },
       setReducedEffects: function (on) { reducedSetting = !!on; },
       tone: function () { return tone; }   // 'dark' | 'light' — HUD 글자색 결정용

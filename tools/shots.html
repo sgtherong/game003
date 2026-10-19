@@ -46,6 +46,8 @@
       if (stop(ctl)) break;
     }
     ctl.replaySource = null;
+    // 빨리 감는 동안 그림 시간은 멈춰 있어 '+1'·GO! 같은 연출이 쌓인다 — 장면에는 남기지 않는다
+    if (K.debug.view) K.debug.view.onEvent({ type: 'start' }, ctl);
   }
 
   function setup(w) {
@@ -54,6 +56,8 @@
     var st = doc.createElement('style'); st.textContent = '*, *::before, *::after { transition: none !important; animation: none !important; }';
     doc.head.appendChild(st);
     function click(sel) { var el = doc.querySelector(sel); if (el) el.click(); }
+    doc.body.classList.add('touch'); // 스토어 사진은 휴대폰 화면: 키보드 안내 숨김
+    if (doc.activeElement && doc.activeElement.blur) doc.activeElement.blur(); // 키보드 포커스 테두리 없이
     if (scene === 'play') {
       ctl.start('challenge');
       driveUntil(w, function (c) {

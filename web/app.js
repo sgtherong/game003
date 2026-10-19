@@ -77,13 +77,15 @@
   // actions: { 'data-act 값': 함수 }
   function showCard(html, actions, extraClass) {
     ui.card.className = 'card' + (extraClass ? ' ' + extraClass : '');
+    ui.overlay.classList.toggle('is-home', extraClass === 'home');
     ui.card.innerHTML = html;
     ui.overlay.hidden = false;
     ui.card.querySelectorAll('[data-act]').forEach(function (el) {
       el.addEventListener('click', function () { audio.unlock(); audio.play('tap'); actions[el.getAttribute('data-act')](el); });
     });
-    var first = ui.card.querySelector('.btn-primary, .mode-tile, .offer') || ui.card.querySelector('button');
-    if (first) first.focus({ preventScroll: true });
+    var first = ui.card.querySelector('.btn-play, .btn-primary, .mode-tile, .offer') || ui.card.querySelector('button');
+    // 키보드용 첫 포커스. 터치 기기에서는 포커스 테두리만 남으므로 하지 않는다
+    if (first && !document.body.classList.contains('touch')) first.focus({ preventScroll: true });
   }
   function hideCard() { ui.overlay.hidden = true; currentCard = null; }
   function afterAction() { ui.pad.focus({ preventScroll: true }); }
@@ -118,13 +120,7 @@
   function readyCard() {
     currentCard = readyCard;
     var first = ctl.needsTutorial();
-    if (!first && ctl.missionList().length) {
-      // 튜토리얼을 마친 뒤에는 조작 설명 대신 미션을 보여 준다
-      showCard('<div class="card-title">' + S.title + '</div>' + missionsPanel() + modeTiles() +
-        '<div class="btn-row"><button type="button" class="btn-ghost" data-act="skins">' + STAR + ' ' + S.skinsTitle + ' · ' + ctl.coins() + '</button>' +
-        '<button type="button" class="btn-ghost" data-act="settings">' + S.settings + '</button></div>', menuActions);
-      return;
-    }
+    if (!first) { homeScreen(); return; }
     showCard(
       '<div class="card-mascot"><i></i></div>' +
       '<div class="card-title">' + S.title + '</div>' +
@@ -141,6 +137,28 @@
           '<div class="btn-row"><button type="button" class="btn-ghost" data-act="skins">' + STAR + ' ' + S.skinsTitle + ' · ' + ctl.coins() + '</button>' +
           '<button type="button" class="btn-ghost" data-act="settings">' + S.settings + '</button></div>'),
       menuActions);
+  }
+  // 시작 화면(튜토리얼 이후): 카드 대신 게임 타이틀 화면처럼 — 로고, 큰 시작 버튼, 다른 모드, 미션, 외형·설정
+  function logoHtml() {
+    return '<div class="logo" aria-label="' + esc(S.title) + '"><div class="logo-mascot" aria-hidden="true"><i></i></div><div class="logo-word" aria-hidden="true">' +
+      S.title.split('').map(function (ch, i) { return '<span style="--i:' + i + '">' + esc(ch) + '</span>'; }).join('') + '</div></div>';
+  }
+  function homeScreen() {
+    var di = ctl.hasGrowth() && ctl.dailyInfo ? ctl.dailyInfo() : null;
+    showCard(
+      logoHtml() +
+      '<div class="home-tag">' + S.tagline + '</div>' +
+      '<button type="button" class="btn-play" data-act="start"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z"/></svg><span><b>' +
+        (ctl.hasGrowth() ? S.modeChallenge : S.start) + '</b>' + (ctl.hasGrowth() ? '<small>' + S.modeChallengeDetail + '</small>' : '') + '</span></button>' +
+      (ctl.hasGrowth() ? '<div class="modes">' +
+        '<button type="button" class="mode-tile growth" data-act="growth"><b>' + S.modeGrowth + '</b><span>' + S.modeGrowthDetail + '</span></button>' +
+        (di ? '<button type="button" class="mode-tile daily" data-act="daily"><b>' + S.modeDaily + '</b><span>' + (di.best ? S.dailyBestShort.replace('{n}', di.best.height) : S.modeDailyDetail) + '</span>' +
+          (di.bonusAvailable ? '<em class="new">' + STAR + di.bonus + '</em>' : '') + '</button>' : '') +
+        '</div>' : '') +
+      missionsPanel() +
+      '<div class="btn-row home-foot"><button type="button" class="btn-ghost" data-act="skins">' + STAR + ' ' + S.skinsTitle + ' · ' + ctl.coins() + '</button>' +
+      '<button type="button" class="btn-ghost" data-act="settings">' + S.settings + '</button></div>',
+      menuActions, 'home');
   }
   function modeTiles() {
     if (!ctl.hasGrowth()) return '<button type="button" class="btn-primary" data-act="start">' + S.start + '</button>';
@@ -233,12 +251,17 @@
     setTimeout(function () { box.remove(); }, 3400);
   }
 
+  // 문구 끝의 ' · 키보드 1 2 3' 같은 키보드 안내는 터치 기기에서 숨긴다(모든 언어가 마지막 ' · ' 뒤에 둠)
+  function kbdTail(text) {
+    var i = text.lastIndexOf(' · ');
+    return i < 0 ? text : esc(text.slice(0, i)) + '<span class="kbd-only">' + esc(text.slice(i)) + '</span>';
+  }
   // ── 성장 모드: 레벨업 카드 ──
   function levelUpCard(level, offers) {
     // 설정을 열었다 닫으면 이 카드로 돌아온다(시작 화면으로 가면 진행 중인 판을 잃는다)
     currentCard = function () { levelUpCard(level, offers); };
     var html = '<div class="card-title">' + S.levelUpTitle + '</div>' +
-      '<div class="card-sub">' + S.level.replace('{n}', level) + ' · ' + S.levelUpSub + '</div><div class="offers">';
+      '<div class="card-sub">' + S.level.replace('{n}', level) + ' · ' + kbdTail(S.levelUpSub) + '</div><div class="offers">';
     offers.forEach(function (o, i) {
       var t = abilityText(o.id);
       var tag = o.kind === 'evolution' ? S.evolution : o.kind === 'curse' ? S.curse : S.stackOf.replace('{n}', o.stacks + 1).replace('{m}', o.max);
@@ -523,7 +546,10 @@
   }
 
   ctl.on(function (ev) {
-    if (ev.type === 'start') { bestAtStart = ctl.best; celebrated = false; ui.heightBox.classList.remove('best'); }
+    if (ev.type === 'start') {
+      bestAtStart = ctl.best; celebrated = false; ui.heightBox.classList.remove('best');
+      if (ctl.mode !== 'tutorial') { view.cue('GO!'); audio.play('go'); }
+    }
     if (ev.type === 'gatePassed') bump();
     if (ev.type === 'start' || ev.type === 'resume') {
       hideCard(); ui.pause.disabled = false;
@@ -673,15 +699,17 @@
 
   // ── 단일 루프 ──
   var lastTone = null, lastState = null;
+  var splash = document.getElementById('splash'), bootAt = performance.now();
   function frame(now) {
     ctl.frame(now);
     renderHud();
     checkBestCrossed();
     view.render(ctl, now);
+    if (splash) { var sp = splash; splash = null; setTimeout(function () { sp.classList.add('out'); setTimeout(function () { sp.remove(); }, 450); }, Math.max(0, 700 - (performance.now() - bootAt))); }
     // 배경 밝기에 맞춰 HUD 글자색 전환
     var tone = view.tone();
     if (tone !== lastTone) { lastTone = tone; ui.stage.classList.toggle('tone-dark', tone === 'dark'); ui.stage.classList.toggle('tone-light', tone !== 'dark'); }
-    if (ctl.state !== lastState) { lastState = ctl.state; ui.stage.classList.toggle('playing', ctl.state === 'PLAYING'); ui.stage.classList.toggle('menu', ctl.state === 'READY'); }
+    if (ctl.state !== lastState) { lastState = ctl.state; ui.stage.classList.toggle('playing', ctl.state === 'PLAYING'); ui.stage.classList.toggle('menu', ctl.state === 'READY' || ctl.state === 'RESULT'); }
     requestAnimationFrame(frame);
   }
 
