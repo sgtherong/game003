@@ -32,6 +32,8 @@
     // 카메라(연출 전용 — 판정과 무관): trauma = 흔들림 세기(제곱으로 사용), kick = 반동 순간 아래로 밀렸다 돌아오는 양, zoom = 순간 확대
     var cam = { trauma: 0, kick: 0, kickV: 0, zoom: 0 };
     var nearStreak = 0, lastPassNear = true;   // 연속 아슬아슬(틈을 연달아 아슬하게 통과한 수)
+    var joyT = 0;      // 웃는 얼굴 남은 시간(초)
+    var deadT = 0, deadAt = 0;     // 실패 뒤 지난 시간(찌그러짐·별 연출)
     var reducedMotion = root.matchMedia && root.matchMedia('(prefers-reduced-motion: reduce)');
     var lastNow = 0;
     var reducedSetting = false; // 설정의 연출 줄이기
@@ -163,7 +165,7 @@
       } else if (ev.type === 'nearMiss') {
         // 같은 틱의 '+1'은 '아슬!'로 대체(겹침 방지)
         effects.pops = effects.pops.filter(function (p) { return !(p.t === 0 && !p.text); });
-        lastPassNear = true; nearStreak++;
+        lastPassNear = true; nearStreak++; joyT = 0.7;
         effects.pops.push({ t: 0, x: run.x, y: PY - 18, text: (strings.nearMissPop || 'Close!') + (nearStreak > 1 ? ' ×' + nearStreak : ''), c: 'gold', big: true, scale: Math.min(1.5, 1 + (nearStreak - 1) * 0.12) });
         if (!reduced()) cam.trauma = Math.max(cam.trauma, 0.2 + Math.min(0.2, nearStreak * 0.05));
         effects.rings.push({ t: 0, x: run.x, y: PY, c: 'gold' });
@@ -174,10 +176,11 @@
       } else if (ev.type === 'levelUp') {
         effects.rings.push({ t: 0, x: run.x, y: PY, c: 'gold', big: true });
         if (!reduced()) cam.zoom = Math.max(cam.zoom, 0.05);
+        joyT = 0.9;
       } else if (ev.type === 'start') {
         effects = { waves: [], pops: [], sparks: [], passGlow: {}, impact: null, rings: [], flash: null, edge: null, confetti: [] };
         cam = { trauma: 0, kick: 0, kickV: 0, zoom: 0 };
-        nearStreak = 0; lastPassNear = true; cueFx = null;
+        nearStreak = 0; lastPassNear = true; cueFx = null; joyT = 0; deadT = 0;
         trail = []; banner = null; lastZoneIndex = 0;
       }
     }
@@ -185,6 +188,7 @@
     // 판 도중 최고 기록을 넘은 순간 등: 금색 배너 + 위에서 쏟아지는 색종이
     function celebrate(text) {
       banner = { t: 0, text: text, accent: true, big: true };
+      joyT = 1.2;
       if (reduced()) return;
       cam.zoom = Math.max(cam.zoom, 0.04);
       var pal = [colors.gold, colors.mint, colors.body, '#7c7cf0', '#ffffff'];
@@ -215,6 +219,7 @@
 
     function tickEffects(dt, frozen) {
       if (cueFx && !frozen) cueFx.t += dt;
+      if (!frozen) joyT = Math.max(0, joyT - dt);
       if (banner && !frozen) { banner.t += dt; if (banner.t > 2.4) banner = null; }
       // 카메라: 흔들림은 서서히 줄고, 반동 밀림은 스프링으로 제자리로
       cam.trauma = Math.max(0, cam.trauma - dt * 1.5);
@@ -257,6 +262,124 @@
       ctx.lineTo(edgeX, y1);
       ctx.closePath(); ctx.fill();
     }
+
+    // ── 높이별 풍경(랜드마크): 구간마다 다른 것이 천천히 지나간다. 장애물과 헷갈리지 않게 옅고 작게, 장애물보다 뒤에 ──
+    function h1(i) { var v = Math.sin(i * 127.1 + 311.7) * 43758.5453; return v - Math.floor(v); }
+    var LM_PAR = 0.45, LM_SP = 130;   // 시차(배경보다 빠르고 장애물보다 느림), 물체 간격(시차 좌표)
+    var LM_TABLE = {
+      dawn: [['birds', 0.55], ['cloud', 1]],
+      sky: [['cloud', 0.45], ['balloon', 0.75], ['birds', 1]],
+      sunset: [['plane', 0.35], ['birds', 0.7], ['cloud', 1]],
+      night: [['satellite', 0.35], ['shooting', 0.65], ['planet', 0.9], ['cloud', 1]],
+      aurora: [['planet', 0.35], ['rocket', 0.6], ['ufo', 0.8], ['satellite', 1]]
+    };
+    function drawLandmarks(dist, nowMs) {
+      var t = reduced() ? 0 : nowMs / 1000;
+      var pd = dist * LM_PAR;
+      var k0 = Math.floor((pd - (VB - PY) - 120) / LM_SP), k1 = Math.ceil((pd + (PY - VT) + 120) / LM_SP);
+      for (var k = Math.max(2, k0); k <= k1; k++) {
+        if (h1(k) < 0.38) continue;                       // 빈 자리(숨 쉴 틈)
+        var y = PY - (k * LM_SP - pd);
+        var zone = ZONES[Math.floor(k * LM_SP / LM_PAR / ZONE_LEN) % ZONES.length].id;
+        var roll = h1(k + 0.5), list = LM_TABLE[zone], kind = list[list.length - 1][0];
+        for (var j = 0; j < list.length; j++) if (roll <= list[j][1]) { kind = list[j][0]; break; }
+        var x = 50 + h1(k + 1.7) * (W - 100), sz = 0.8 + h1(k + 2.3) * 0.5, dir = h1(k + 3.1) < 0.5 ? -1 : 1;
+        ctx.save();
+        LM_DRAW[kind](x, y, sz, t, dir, k);
+        ctx.restore();
+      }
+    }
+    var LM_DRAW = {
+      cloud: function (x, y, s) {
+        ctx.fillStyle = alpha(Z.dark ? '#cfd6ff' : '#ffffff', Z.dark ? 0.12 : 0.55);
+        // 원 여러 개를 한 경로로 합쳐 한 번에 칠한다(반투명이 겹쳐 진해지는 이음새 방지)
+        ctx.beginPath();
+        [[-22, 4, 14], [-6, -4, 19], [14, 2, 15], [28, 7, 10]].forEach(function (c) { ctx.moveTo(x + (c[0] + c[2]) * s, y + c[1] * s); ctx.arc(x + c[0] * s, y + c[1] * s, c[2] * s, 0, Math.PI * 2); });
+        ctx.rect(x - 22 * s, y + 4 * s, 50 * s, 13 * s);
+        ctx.fill();
+      },
+      birds: function (x, y, s, t, dir, k) {
+        ctx.strokeStyle = alpha(Z.dark ? '#dfe6ff' : Z.wallDeep, 0.38); ctx.lineWidth = 1.6; ctx.lineCap = 'round';
+        var drift = ((t * 14 * dir + k * 37) % (W + 120) + W + 120) % (W + 120) - 60;
+        for (var b = 0; b < 4; b++) {
+          var bx = drift + (b % 2 ? 14 : 0) * dir - b * 11 * dir + (x - W / 2) * 0.2, by = y + b * 7 - (b % 2) * 3;
+          var f = Math.sin(t * 9 + b * 1.3) * 3.5 * s, w = 6 * s;
+          ctx.beginPath(); ctx.moveTo(bx - w, by - f); ctx.quadraticCurveTo(bx - w / 2, by - 2, bx, by); ctx.quadraticCurveTo(bx + w / 2, by - 2, bx + w, by - f); ctx.stroke();
+        }
+      },
+      balloon: function (x, y, s, t) {
+        var by = y + Math.sin(t * 0.9 + x) * 4, R = 15 * s;
+        ctx.globalAlpha = 0.82;
+        ctx.fillStyle = colors.body; ctx.beginPath(); ctx.ellipse(x, by, R * 0.86, R, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.save(); ctx.beginPath(); ctx.ellipse(x, by, R * 0.86, R, 0, 0, Math.PI * 2); ctx.clip();
+        ctx.fillStyle = colors.gold; [-0.5, 0.25].forEach(function (o) { ctx.fillRect(x + o * R, by - R, R * 0.28, R * 2); });
+        ctx.fillStyle = 'rgba(255,255,255,0.25)'; ctx.beginPath(); ctx.ellipse(x - R * 0.35, by - R * 0.4, R * 0.18, R * 0.32, -0.4, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+        ctx.strokeStyle = alpha(Z.wallDeep, 0.6); ctx.lineWidth = 0.8;
+        ctx.beginPath(); ctx.moveTo(x - R * 0.5, by + R * 0.8); ctx.lineTo(x - 3 * s, by + R + 9 * s); ctx.moveTo(x + R * 0.5, by + R * 0.8); ctx.lineTo(x + 3 * s, by + R + 9 * s); ctx.stroke();
+        ctx.fillStyle = '#9a6a3a'; ctx.fillRect(x - 4 * s, by + R + 8 * s, 8 * s, 6 * s);
+      },
+      plane: function (x, y, s, t, dir, k) {
+        var px = ((t * 26 * dir + k * 53) % (W + 160) + W + 160) % (W + 160) - 80;
+        var g = ctx.createLinearGradient(px - dir * 90, 0, px, 0);
+        g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,0.55)');
+        ctx.strokeStyle = g; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(px - dir * 90, y + 1); ctx.lineTo(px - dir * 6, y + 1); ctx.stroke();
+        ctx.fillStyle = alpha(Z.dark ? '#e8ecff' : '#ffffff', 0.9);
+        ctx.save(); ctx.translate(px, y); ctx.scale(dir * s, s);
+        ctx.beginPath(); ctx.ellipse(0, 0, 11, 2.4, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-1, 0); ctx.lineTo(-5, 7); ctx.lineTo(-2, 7); ctx.lineTo(4, 0); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(-8, 0); ctx.lineTo(-11, -5); ctx.lineTo(-9, -5); ctx.lineTo(-5, 0); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      },
+      satellite: function (x, y, s, t) {
+        ctx.save(); ctx.translate(x, y); ctx.rotate(0.35 + Math.sin(t * 0.3) * 0.1); ctx.scale(s, s);
+        ctx.fillStyle = 'rgba(120,160,230,0.75)'; ctx.fillRect(-22, -4, 13, 8); ctx.fillRect(9, -4, 13, 8);
+        ctx.strokeStyle = 'rgba(220,230,255,0.5)'; ctx.lineWidth = 0.6;
+        for (var i = 0; i < 3; i++) { ctx.beginPath(); ctx.moveTo(-22 + i * 4.3, -4); ctx.lineTo(-22 + i * 4.3, 4); ctx.moveTo(9 + i * 4.3, -4); ctx.lineTo(9 + i * 4.3, 4); ctx.stroke(); }
+        ctx.fillStyle = 'rgba(230,235,250,0.85)'; ctx.fillRect(-7, -5, 14, 10);
+        ctx.fillStyle = Math.floor(t * 2) % 2 ? 'rgba(255,90,90,0.95)' : 'rgba(255,90,90,0.25)';
+        ctx.beginPath(); ctx.arc(0, -7, 1.6, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      },
+      shooting: function (x, y, s, t, dir, k) {
+        var ph = ((t * 0.45 + h1(k)) % 1);            // 주기마다 한 번 휙
+        if (ph > 0.28) return;
+        var q = ph / 0.28, sx = x - dir * 60 + dir * q * 120, sy = y - 20 + q * 40;
+        var g = ctx.createLinearGradient(sx - dir * 40, sy - 14, sx, sy);
+        g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(255,255,255,' + (0.9 * Math.sin(q * Math.PI)).toFixed(3) + ')');
+        ctx.strokeStyle = g; ctx.lineWidth = 1.8; ctx.lineCap = 'round';
+        ctx.beginPath(); ctx.moveTo(sx - dir * 40, sy - 14); ctx.lineTo(sx, sy); ctx.stroke();
+      },
+      planet: function (x, y, s, t, dir) {
+        var R = 16 * s, c1 = Z.far;
+        var g = ctx.createRadialGradient(x - R * 0.4, y - R * 0.4, R * 0.1, x, y, R);
+        g.addColorStop(0, alpha(mix(c1, '#ffffff', 0.5), 0.75)); g.addColorStop(1, alpha(mix(c1, '#1a1040', 0.4), 0.7));
+        ctx.strokeStyle = alpha(mix(c1, '#ffffff', 0.3), 0.55); ctx.lineWidth = 2.2;
+        ctx.beginPath(); ctx.ellipse(x, y, R * 1.7, R * 0.42, dir * 0.3, Math.PI, Math.PI * 2); ctx.stroke();
+        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, R, 0, Math.PI * 2); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(x, y, R * 1.7, R * 0.42, dir * 0.3, 0, Math.PI); ctx.stroke();
+      },
+      rocket: function (x, y, s, t) {
+        var ry = y + ((t * 30) % 60) * -1 + 30;
+        ctx.save(); ctx.translate(x, ry); ctx.rotate(0.25); ctx.scale(s, s);
+        ctx.fillStyle = 'rgba(255,170,60,' + (0.6 + 0.3 * Math.sin(t * 30)).toFixed(3) + ')';
+        ctx.beginPath(); ctx.moveTo(-3, 10); ctx.lineTo(0, 18 + Math.sin(t * 40) * 3); ctx.lineTo(3, 10); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(240,244,255,0.85)'; ctx.beginPath(); ctx.moveTo(0, -12); ctx.quadraticCurveTo(6, -4, 4, 10); ctx.lineTo(-4, 10); ctx.quadraticCurveTo(-6, -4, 0, -12); ctx.fill();
+        ctx.fillStyle = alpha(colors.body, 0.9); ctx.beginPath(); ctx.moveTo(-4, 4); ctx.lineTo(-8, 12); ctx.lineTo(-4, 10); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(4, 4); ctx.lineTo(8, 12); ctx.lineTo(4, 10); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(90,200,255,0.9)'; ctx.beginPath(); ctx.arc(0, -3, 2, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      },
+      ufo: function (x, y, s, t) {
+        var ux = x + Math.sin(t * 0.8) * 30, uy = y + Math.sin(t * 2.1) * 3;
+        ctx.save(); ctx.translate(ux, uy); ctx.scale(s, s);
+        ctx.fillStyle = 'rgba(180,255,220,0.12)'; ctx.beginPath(); ctx.moveTo(-6, 3); ctx.lineTo(-14, 30); ctx.lineTo(14, 30); ctx.lineTo(6, 3); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = 'rgba(190,240,255,0.7)'; ctx.beginPath(); ctx.ellipse(0, -3, 6, 5, 0, Math.PI, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(200,210,235,0.85)'; ctx.beginPath(); ctx.ellipse(0, 0, 15, 4, 0, 0, Math.PI * 2); ctx.fill();
+        for (var i = -1; i <= 1; i++) { ctx.fillStyle = (Math.floor(t * 4) + i) % 2 ? 'rgba(255,230,120,0.95)' : 'rgba(255,230,120,0.3)'; ctx.beginPath(); ctx.arc(i * 8, 1, 1.4, 0, Math.PI * 2); ctx.fill(); }
+        ctx.restore();
+      }
+    };
 
     function drawBackground(dist, nowMs) {
       var grad = ctx.createLinearGradient(0, VT, 0, VB);
@@ -311,6 +434,8 @@
       drawCliff(dist, 1, 0.25, 30, alpha(Z.hill2, 0.55), 4.1);
       drawCliff(dist, -1, 0.62, 14, alpha(Z.hill, 0.8), 0.2);
       drawCliff(dist, 1, 0.62, 14, alpha(Z.hill, 0.8), 2.6);
+
+      drawLandmarks(dist, nowMs);
 
       // 떠다니는 먼지(위로 올라가는 느낌: 화면 아래로 흐름)
       for (var p = 0, np = Math.round(22 * SPAN / H); p < np; p++) {
@@ -431,6 +556,12 @@
       ctx.globalAlpha = 1;
     }
 
+    function star5(cx, cy, R) {
+      ctx.beginPath();
+      for (var i = 0; i < 10; i++) { var a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? R * 0.45 : R; ctx.lineTo(cx + Math.cos(a) * rr, cy + Math.sin(a) * rr); }
+      ctx.closePath(); ctx.fill();
+    }
+
     // ── 캐릭터 ──
     function drawPlayer(run, state, nowMs, playing, skinId) {
       var tint = K.Skins.get(skinId).tint;
@@ -477,9 +608,28 @@
       halo.addColorStop(0, alpha(danger > 0.5 ? colors.danger : tint, 0.26 + danger * 0.2)); halo.addColorStop(1, alpha(tint, 0));
       ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(x, PY, r * 1.9, 0, Math.PI * 2); ctx.fill();
 
+      // 표정(연출 전용): 앞 틈이 지금 몸으로는 못 지나갈 만큼 가까우면 놀람, 오래 눌러 에너지가 높으면 악물기, 아슬아슬 직후 웃음
+      var mood = null;
+      if (!dead) {
+        if (joyT > 0) mood = 'joy';
+        else if (held && p > 0.6) mood = 'strain';
+        else if (!held && playing) {
+          for (var gi = 0; gi < run.gates.length; gi++) {
+            var gt = run.gates[gi];
+            if (gt.passed || gt.broken) continue;
+            var dz = (gt.z - gt.h / 2) - run.distance;
+            if (dz > 0 && dz < 70 && Math.abs(x - gt.cx) + r > gt.gap / 2) { mood = 'scared'; break; }
+          }
+        }
+      }
+      // 실패 순간: 납작하게 찌그러졌다 돌아오고, 머리 위로 별이 돈다(판정이 끝난 뒤라 원 밖으로 그려도 됨)
+      if (dead) { if (!deadAt) deadAt = nowMs; deadT = (nowMs - deadAt) / 1000; } else { deadAt = 0; deadT = 0; }
+      var squash = dead && !reduced() && deadT < 0.45 ? Math.sin(Math.min(1, deadT / 0.45) * Math.PI) * 0.28 : 0;
+      if (squash) { ctx.save(); ctx.translate(x, PY + r); ctx.scale(1 + squash, 1 - squash); ctx.translate(-x, -PY - r); }
       // 몸·얼굴: 장착한 외형으로 그린다(판정 원 안에만). 반동 직후 크게, 평소엔 아주 약하게 출렁임
       var wob = reduced() || dead ? 0 : 0.006 + Math.min(1, Math.abs(run.radialVelocity) / 160) * 0.019;
       K.Skins.paint(skinId, {
+        mood: mood,
         ctx: ctx, x: x, y: PY, r: r, held: held, energy: p, dead: dead, danger: danger,
         now: reduced() ? 0 : nowMs, wob: wob, phase: nowMs / 140,
         look: Math.max(-1, Math.min(1, (run.targetX - run.x) / 30)),
@@ -487,6 +637,15 @@
         expanded: run.radius > BASE * 1.08,
         bodyColor: colors.body
       });
+      if (squash) ctx.restore();
+      if (dead && deadT > 0.15) {
+        var sa = Math.min(1, (deadT - 0.15) / 0.25), tt = reduced() ? 0 : nowMs / 420;
+        for (var si = 0; si < 3; si++) {
+          var ang = tt + si * Math.PI * 2 / 3, sx2 = x + Math.cos(ang) * r * 0.95, sy2 = PY - r - 6 + Math.sin(ang) * r * 0.28;
+          ctx.fillStyle = alpha(colors.gold, sa * (0.55 + 0.45 * (Math.sin(ang) + 1) / 2));
+          star5(sx2, sy2, 4.2);
+        }
+      }
       // 땀(경고)
       if (!dead && p > 0.75) {
         var sx = x + r * 0.8, sy = PY - r * 0.55, ss = Math.max(2.5, r * 0.14);

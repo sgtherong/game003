@@ -140,9 +140,10 @@
   }
   // 시작 화면(튜토리얼 이후): 카드 대신 게임 타이틀 화면처럼 — 로고, 큰 시작 버튼, 다른 모드, 미션, 외형·설정
   function logoHtml() {
-    return '<div class="logo" aria-label="' + esc(S.title) + '"><div class="logo-mascot" aria-hidden="true"><i></i></div><div class="logo-word" aria-hidden="true">' +
-      S.title.split('').map(function (ch, i) { return '<span style="--i:' + i + '">' + esc(ch) + '</span>'; }).join('') + '</div></div>';
+    // 로고 글씨는 손으로 그린 선(SVG) — 기기 글꼴과 무관하게 어디서나 같은 모양. 게임 이름은 모든 언어에서 'Boing!'
+    return '<div class="logo" role="img" aria-label="' + esc(S.title) + '"><div class="logo-mascot" aria-hidden="true"><i></i></div>' + LOGO_SVG + '</div>';
   }
+  var LOGO_SVG = '<svg class="logo-svg" viewBox="0 0 310 124" aria-hidden="true"><g class="lw" style="--i:0"><path class="lw-sh" d="M24 18V86M24 18H42a16 16 0 0 1 0 32H24M24 50H46a18 18 0 0 1 0 36H24"/><path class="lw-ol" d="M24 18V86M24 18H42a16 16 0 0 1 0 32H24M24 50H46a18 18 0 0 1 0 36H24"/><path class="lw-fi" d="M24 18V86M24 18H42a16 16 0 0 1 0 32H24M24 50H46a18 18 0 0 1 0 36H24"/><path class="lw-hi" d="M24 18V86M24 18H42a16 16 0 0 1 0 32H24M24 50H46a18 18 0 0 1 0 36H24"/></g><g class="lw" style="--i:1"><path class="lw-sh" d="M95 46a20 20 0 1 0 0.01 0"/><path class="lw-ol" d="M95 46a20 20 0 1 0 0.01 0"/><path class="lw-fi" d="M95 46a20 20 0 1 0 0.01 0"/><path class="lw-hi" d="M95 46a20 20 0 1 0 0.01 0"/></g><g class="lw" style="--i:2"><path class="lw-sh" d="M134 46V86M134 22v0.01"/><path class="lw-ol" d="M134 46V86M134 22v0.01"/><path class="lw-fi" d="M134 46V86M134 22v0.01"/><path class="lw-hi" d="M134 46V86M134 22v0.01"/></g><g class="lw" style="--i:3"><path class="lw-sh" d="M160 86V46M160 64a18 18 0 0 1 36 0V86"/><path class="lw-ol" d="M160 86V46M160 64a18 18 0 0 1 36 0V86"/><path class="lw-fi" d="M160 86V46M160 64a18 18 0 0 1 36 0V86"/><path class="lw-hi" d="M160 86V46M160 64a18 18 0 0 1 36 0V86"/></g><g class="lw" style="--i:4"><path class="lw-sh" d="M233 46a20 20 0 1 0 0.01 0M253 46V88a20 20 0 0 1 -37 10"/><path class="lw-ol" d="M233 46a20 20 0 1 0 0.01 0M253 46V88a20 20 0 0 1 -37 10"/><path class="lw-fi" d="M233 46a20 20 0 1 0 0.01 0M253 46V88a20 20 0 0 1 -37 10"/><path class="lw-hi" d="M233 46a20 20 0 1 0 0.01 0M253 46V88a20 20 0 0 1 -37 10"/></g><g class="lw" style="--i:5"><path class="lw-sh" d="M282 18V62M282 86v0.01"/><path class="lw-ol" d="M282 18V62M282 86v0.01"/><path class="lw-fi" d="M282 18V62M282 86v0.01"/><path class="lw-hi" d="M282 18V62M282 86v0.01"/></g></svg>';
   function homeScreen() {
     var di = ctl.hasGrowth() && ctl.dailyInfo ? ctl.dailyInfo() : null;
     showCard(
@@ -336,6 +337,7 @@
       '<div class="card-sub">' + esc(S.shareMsg.replace('{h}', rec.height)) + '</div>' +
       '<label class="name-field"><span>' + S.nameLabel + '</span><input id="nick" type="text" maxlength="12" autocomplete="nickname" placeholder="' + esc(S.namePlaceholder) + '" value="' + esc(ctl.nickname()) + '"></label>' +
       (isLocalHost() ? '<div class="card-warn local">' + S.localWarn + '</div>' : '') +
+      '<div class="share-preview" aria-hidden="true"><img id="share-img" alt=""></div>' +
       (kakaoEnabled() ? '<button type="button" class="btn-kakao" data-act="kakao">' + S.kakaoBtn + '</button>' : '') +
       (kakaoEnabled()
         ? '<div class="btn-row"><button type="button" class="btn-ghost" data-act="send">' + S.otherBtn + '</button><button type="button" class="btn-ghost" data-act="copy">' + S.copyBtn + '</button></div>'
@@ -350,6 +352,18 @@
     var input = $('nick');
     input.addEventListener('keydown', function (e) { e.stopPropagation(); }); // 이름 입력 중 게임 키 처리 안 함
     input.addEventListener('keyup', function (e) { e.stopPropagation(); });
+    // 기록 카드 이미지: 미리보기로 보여 주고, 휴대폰 공유 창이 파일을 받으면 함께 보낸다(이름을 바꾸면 다시 그림)
+    var imgBlob = null, imgTimer = 0;
+    function refreshImage() {
+      makeShareImage(rec, input.value.trim()).then(function (b) {
+        imgBlob = b;
+        var el = $('share-img'); if (!el) return;
+        if (el.src) URL.revokeObjectURL(el.src);
+        el.src = URL.createObjectURL(b);
+      }).catch(function () { imgBlob = null; });
+    }
+    refreshImage();
+    input.addEventListener('input', function () { clearTimeout(imgTimer); imgTimer = setTimeout(refreshImage, 350); });
 
     // 짧은 링크: 코스·기록·이름만 담는다(고스트 입력 기록은 넣지 않음 → 약 30자)
     function build(asQuery) {
@@ -375,11 +389,82 @@
       build().then(function (url) {
         var text = S.shareMsg.replace('{h}', rec.height);
         if (native && navigator.share) {
-          return navigator.share({ title: S.title, text: text, url: url }).then(function () { toast(S.shared); }, function () { /* 사용자가 취소 */ });
+          // 파일을 받는 공유 창이면 기록 카드 이미지를 붙인다. 일부 앱은 파일과 함께면 url을 버리므로 링크를 문구 안에도 넣는다
+          var file = imgBlob && typeof File === 'function' ? new File([imgBlob], 'boing-' + rec.height + 'm.jpg', { type: 'image/jpeg' }) : null;
+          var data = file && navigator.canShare && navigator.canShare({ files: [file] })
+            ? { title: S.title, text: text + ' ' + url, files: [file] }
+            : { title: S.title, text: text, url: url };
+          return navigator.share(data).then(function () { toast(S.shared); }, function () { /* 사용자가 취소 */ });
         }
         return navigator.clipboard.writeText(text + ' ' + url).then(function () { toast(S.copied); });
       }).catch(function () { toast(S.shareFail); });
     }
+  }
+
+  // ── 기록 카드 이미지(1080×1350, 글자 없이 숫자·로고·이름만 → 언어 공용) ──
+  // 기록 높이 구간의 하늘색, 장착한 외형의 웃는 얼굴, 큰 기록 숫자, 로고. 기기 안에서만 만들고 서버로 보내지 않는다.
+  function logoImage() {
+    var ds = [], re = /class="lw-sh" d="([^"]+)"/g, m;
+    while ((m = re.exec(LOGO_SVG))) ds.push(m[1]);
+    function layer(stroke, w, extra) { return ds.map(function (d) { return '<path d="' + d + '" fill="none" stroke="' + stroke + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"' + (extra || '') + '/>'; }).join(''); }
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 310 124">' + layer('#3a0d05', 25, ' opacity="0.45" transform="translate(0 5)"') +
+      layer('#c23a2c', 25) + layer('#fff7ec', 18) + '</svg>';
+    return new Promise(function (res, rej) { var im = new Image(); im.onload = function () { res(im); }; im.onerror = rej; im.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg); });
+  }
+  function makeShareImage(rec, name) {
+    return logoImage().then(function (logo) {
+      var W = 1080, H = 1350, cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+      var c = cv.getContext('2d'), Z = K.View.ZONES[Math.floor(rec.height / 100) % K.View.ZONES.length];
+      var g = c.createLinearGradient(0, 0, 0, H); g.addColorStop(0, Z.top); g.addColorStop(1, Z.bottom);
+      c.fillStyle = g; c.fillRect(0, 0, W, H);
+      // 해·달 빛, 별(밤 구간)
+      var sg = c.createRadialGradient(820, 330, 20, 820, 330, 300); sg.addColorStop(0, 'rgba(255,245,210,0.7)'); sg.addColorStop(1, 'rgba(255,245,210,0)');
+      c.fillStyle = sg; c.fillRect(420, 0, 660, 700);
+      for (var i = 0; i < 60 * Z.stars; i++) { c.fillStyle = 'rgba(255,255,255,' + (0.3 + (i % 5) * 0.12) + ')'; c.fillRect((i * 173.3) % W, (i * 97.1) % (H * 0.7), 3, 3); }
+      // 양옆 절벽
+      [[-1, 70, Z.hill2, 0.55, 1.3], [1, 70, Z.hill2, 0.55, 4.1], [-1, 34, Z.hill, 0.85, 0.2], [1, 34, Z.hill, 0.85, 2.6]].forEach(function (q) {
+        c.globalAlpha = q[3]; c.fillStyle = q[2]; c.beginPath(); var ex = q[0] < 0 ? 0 : W; c.moveTo(ex, 0);
+        for (var y = 0; y <= H; y += 20) { var w = q[1] + Math.sin(y * 0.008 + q[4]) * 28 + Math.sin(y * 0.021 + q[4] * 2) * 12; c.lineTo(q[0] < 0 ? w : W - w, y); }
+        c.lineTo(ex, H); c.closePath(); c.fill(); c.globalAlpha = 1;
+      });
+      // 돌판 두 개(틈)와 그 틈을 지나 솟는 캐릭터
+      function rrect(x, y, w, h, r) { c.beginPath(); if (c.roundRect) c.roundRect(x, y, w, h, r); else c.rect(x, y, w, h); } // 오래된 iOS 대비
+      function slab(x, y, w, h) {
+        var sgr = c.createLinearGradient(0, y, 0, y + h); sgr.addColorStop(0, Z.wall); sgr.addColorStop(1, Z.wallDeep);
+        c.fillStyle = 'rgba(0,0,0,0.18)'; rrect(x, y + 12, w, h, 22); c.fill();
+        c.fillStyle = sgr; rrect(x, y, w, h, 22); c.fill();
+        c.fillStyle = 'rgba(255,255,255,0.22)'; c.fillRect(x + 10, y, w - 20, 5);
+      }
+      slab(-40, 760, 420, 90); slab(700, 760, 420, 90);
+      c.save(); c.shadowColor = Z.rim; c.shadowBlur = 20; c.fillStyle = Z.rim; c.fillRect(372, 770, 10, 70); c.fillRect(698, 770, 10, 70); c.restore();
+      var skin = ctl.equippedSkin ? ctl.equippedSkin() : 'base';
+      var halo = c.createRadialGradient(540, 640, 100, 540, 640, 300); halo.addColorStop(0, 'rgba(255,255,255,0.35)'); halo.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = halo; c.beginPath(); c.arc(540, 640, 300, 0, Math.PI * 2); c.fill();
+      c.lineCap = 'round';
+      [[470, 820, 150], [540, 850, 180], [610, 820, 150]].forEach(function (l) {
+        var lg = c.createLinearGradient(0, l[1], 0, l[1] + l[2]); lg.addColorStop(0, 'rgba(255,255,255,0.8)'); lg.addColorStop(1, 'rgba(255,255,255,0)');
+        c.strokeStyle = lg; c.lineWidth = 16; c.beginPath(); c.moveTo(l[0], l[1]); c.lineTo(l[0], l[1] + l[2]); c.stroke();
+      });
+      K.Skins.paint(skin, { ctx: c, x: 540, y: 640, r: 170, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false, mood: 'joy' });
+      // 로고
+      c.save(); c.shadowColor = 'rgba(60,20,10,0.25)'; c.shadowBlur = 24; c.drawImage(logo, 290, 70, 500, 200); c.restore();
+      // 기록 숫자
+      var ink = Z.stars > 0.5 ? '#ffffff' : '#1d2833';
+      c.textAlign = 'center'; c.textBaseline = 'alphabetic';
+      c.font = '900 210px ' + getComputedStyle(document.body).fontFamily;
+      var num = String(rec.height), nw = c.measureText(num).width;
+      c.font = '800 80px ' + getComputedStyle(document.body).fontFamily; var mw = c.measureText('m').width;
+      var x0 = 540 - (nw + 14 + mw) / 2, by = 1140;
+      c.lineJoin = 'round'; c.lineWidth = 18; c.strokeStyle = Z.stars > 0.5 ? 'rgba(10,14,34,0.45)' : 'rgba(255,255,255,0.85)';
+      c.textAlign = 'left';
+      c.font = '900 210px ' + getComputedStyle(document.body).fontFamily; c.strokeText(num, x0, by); c.fillStyle = ink; c.fillText(num, x0, by);
+      c.font = '800 80px ' + getComputedStyle(document.body).fontFamily; c.strokeText('m', x0 + nw + 14, by); c.fillText('m', x0 + nw + 14, by);
+      // 통과 수(아이콘 + 숫자), 이름(있으면)
+      c.textAlign = 'center'; c.font = '800 56px ' + getComputedStyle(document.body).fontFamily;
+      var sub = '▲ ' + rec.passed + (name ? '   ·   ' + name : '');
+      c.lineWidth = 12; c.strokeText(sub, 540, 1240); c.fillStyle = ink; c.globalAlpha = 0.85; c.fillText(sub, 540, 1240); c.globalAlpha = 1;
+      return new Promise(function (res, rej) { cv.toBlob(function (b) { if (b) res(b); else rej(new Error('blob')); }, 'image/jpeg', 0.9); }); // JPEG: 메신저로 보내기 가볍게(PNG의 약 1/4)
+    });
   }
 
   var incoming = null;
@@ -733,5 +818,5 @@
   requestAnimationFrame(frame);
 
   // 디버그/검증용 핸들(읽기 전용 용도)
-  root.KKUK.debug = { ctl: ctl, audio: audio, view: view };
+  root.KKUK.debug = { ctl: ctl, audio: audio, view: view, shareImage: makeShareImage };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

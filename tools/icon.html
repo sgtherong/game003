@@ -1,0 +1,85 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Boing! 앱 아이콘</title>
+<!-- 앱 아이콘 원본. node tools/make-icons.js 가 이 페이지를 크기별로 찍는다.  ?size=512&mode=any|full
+     any  = 둥근 사각형(바깥 투명) — 웹·PWA 일반 아이콘
+     full = 꽉 찬 사각형 — 안드로이드 마스크(maskable)·iOS(apple-touch-icon). 중요한 그림은 가운데 80% 원(안전 영역) 안에.
+     캐릭터는 게임과 같은 그림 코드(web/skins.js)로 그린다. 글자는 넣지 않는다(언어 공용). -->
+<style>html, body { margin: 0; background: transparent; overflow: hidden; } canvas { display: block; }</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="../web/skins.js"></script>
+<script>
+(function () {
+  var q = new URLSearchParams(location.search);
+  var S = +(q.get('size') || 512), full = q.get('mode') === 'full';
+  var cv = document.getElementById('c'); cv.width = cv.height = S;
+  document.documentElement.style.width = document.body.style.width = S + 'px';
+  var ctx = cv.getContext('2d');
+  ctx.scale(S / 512, S / 512);
+  function rr(x, y, w, h, r) { ctx.beginPath(); ctx.roundRect(x, y, w, h, r); }
+
+  // 바탕 모양: 둥근 사각형(일반) 또는 꽉 참(마스크·iOS)
+  ctx.save();
+  if (!full) { rr(0, 0, 512, 512, 112); ctx.clip(); }
+
+  // 하늘: 캐릭터(산호색)와 대비되는 맑은 파랑
+  var bg = ctx.createLinearGradient(0, 0, 0, 512);
+  bg.addColorStop(0, '#6cc2ff'); bg.addColorStop(0.6, '#a9dcff'); bg.addColorStop(1, '#e4f5ff');
+  ctx.fillStyle = bg; ctx.fillRect(0, 0, 512, 512);
+  // 해 빛
+  var sg = ctx.createRadialGradient(410, 96, 6, 410, 96, 170);
+  sg.addColorStop(0, 'rgba(255,248,210,0.95)'); sg.addColorStop(0.3, 'rgba(255,244,200,0.45)'); sg.addColorStop(1, 'rgba(255,244,200,0)');
+  ctx.fillStyle = sg; ctx.fillRect(220, -80, 380, 360);
+  // 구름 한 덩이(아래)
+  ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.beginPath();
+  [[70, 470, 46], [130, 450, 56], [196, 476, 40], [380, 486, 44], [440, 462, 54], [500, 482, 40]].forEach(function (c) { ctx.moveTo(c[0] + c[2], c[1]); ctx.arc(c[0], c[1], c[2], 0, Math.PI * 2); });
+  ctx.fill();
+
+  // 위쪽 돌판 두 개(가운데 틈) — 게임의 장애물 모양
+  function slab(x, y, w, h, radii) {
+    var g = ctx.createLinearGradient(0, y, 0, y + h);
+    g.addColorStop(0, '#4a6079'); g.addColorStop(0.35, '#2d3f52'); g.addColorStop(1, '#1b2a3a');
+    ctx.fillStyle = 'rgba(0,0,0,0.18)'; rr(x, y + 8, w, h, radii); ctx.fill();
+    ctx.fillStyle = g; rr(x, y, w, h, radii); ctx.fill();
+    ctx.save(); rr(x, y, w, h, radii); ctx.clip();
+    ctx.strokeStyle = 'rgba(255,255,255,0.07)'; ctx.lineWidth = 6;
+    for (var sx = x - h; sx < x + w; sx += 26) { ctx.beginPath(); ctx.moveTo(sx, y + h); ctx.lineTo(sx + h, y); ctx.stroke(); }
+    ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.fillRect(x, y, w, 4);
+    ctx.restore();
+  }
+  slab(-30, 58, 210, 62, [0, 18, 18, 0]);
+  slab(332, 58, 210, 62, [18, 0, 0, 18]);
+  ctx.save(); ctx.shadowColor = '#7ee0d2'; ctx.shadowBlur = 14; ctx.fillStyle = '#7ee0d2';
+  rr(172, 64, 8, 50, 4); ctx.fill(); rr(332, 64, 8, 50, 4); ctx.fill(); ctx.restore();
+
+  // 위로 튀어 오르는 바람 줄기(캐릭터 아래)
+  ctx.lineCap = 'round';
+  [[190, 410, 80], [256, 430, 96], [322, 410, 80]].forEach(function (l) {
+    var g = ctx.createLinearGradient(0, l[1], 0, l[1] + l[2]);
+    g.addColorStop(0, 'rgba(255,255,255,0.95)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    ctx.strokeStyle = g; ctx.lineWidth = 14; ctx.beginPath(); ctx.moveTo(l[0], l[1]); ctx.lineTo(l[0], l[1] + l[2]); ctx.stroke();
+  });
+
+  // 캐릭터: 신난 얼굴로 틈을 향해 솟구침
+  var cx = 256, cy = 272, R = 142;
+  var halo = ctx.createRadialGradient(cx, cy, R * 0.7, cx, cy, R * 1.45);
+  halo.addColorStop(0, 'rgba(255,118,88,0.35)'); halo.addColorStop(1, 'rgba(255,118,88,0)');
+  ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, cy, R * 1.45, 0, Math.PI * 2); ctx.fill();
+  KKUK.Skins.paint('base', { ctx: ctx, x: cx, y: cy, r: R, held: false, energy: 0, dead: false, danger: 0, now: 0, wob: 0, phase: 0, look: 0, blink: false, expanded: false, mood: 'joy' });
+
+  // 반짝이
+  function sparkle(x, y, s, a) {
+    ctx.fillStyle = 'rgba(255,236,150,' + a + ')'; ctx.beginPath();
+    ctx.moveTo(x, y - s); ctx.quadraticCurveTo(x, y, x + s, y); ctx.quadraticCurveTo(x, y, x, y + s); ctx.quadraticCurveTo(x, y, x - s, y); ctx.quadraticCurveTo(x, y, x, y - s); ctx.fill();
+  }
+  sparkle(420, 200, 26, 1); sparkle(92, 236, 18, 0.9); sparkle(444, 300, 12, 0.85);
+  ctx.restore();
+  document.title = 'ready';
+})();
+</script>
+</body>
+</html>

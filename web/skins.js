@@ -64,17 +64,39 @@
 
   // ── 공통 얼굴 ──
   // opts: { ink, sclera, cheeks, mouth: 'smile'|'pucker', sleepy }
+  // api.mood(연출 전용): 'joy'(아슬아슬·레벨업 직후) | 'scared'(이대로면 부딪힘) | 'strain'(오래 눌러 에너지 높음) | 없음
   function drawFace(api, opts) {
     var ctx = api.ctx, x = api.x, y = api.y, r = api.r, ink = opts.ink || '#1f1630';
     var ex = r * 0.32, ey = y - r * 0.04, es = Math.max(1.3, r * 0.075);
     ctx.strokeStyle = ink; ctx.fillStyle = ink; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
     ctx.lineWidth = Math.max(1.2, r * 0.07);
-    var look = api.look || 0;
+    var look = api.look || 0, mood = api.dead ? 'dizzy' : api.mood;
     if (api.dead) {
+      // 어지러운 소용돌이 눈
+      [-1, 1].forEach(function (s) {
+        var cx = x + s * ex, turns = Math.PI * 4, rot = (api.now || 0) / 180 * s;
+        ctx.beginPath();
+        for (var t = 0; t <= turns; t += 0.35) {
+          var rr = es * 1.9 * t / turns, a = t + rot;
+          if (t === 0) ctx.moveTo(cx + Math.cos(a) * rr, ey + Math.sin(a) * rr); else ctx.lineTo(cx + Math.cos(a) * rr, ey + Math.sin(a) * rr);
+        }
+        ctx.lineWidth = Math.max(1, r * 0.05); ctx.stroke();
+      });
+      ctx.lineWidth = Math.max(1.2, r * 0.07);
+    } else if (mood === 'joy') {
+      // ^ ^ 웃는 눈
+      [-1, 1].forEach(function (s) { ctx.beginPath(); ctx.arc(x + s * ex, ey + es * 0.7, es * 1.25, Math.PI * 1.15, Math.PI * 1.85); ctx.stroke(); });
+    } else if (mood === 'scared' && !api.held) {
+      // 놀라 커진 눈, 작은 눈동자
       [-1, 1].forEach(function (s) {
         var cx = x + s * ex;
-        ctx.beginPath(); ctx.moveTo(cx - es, ey - es); ctx.lineTo(cx + es, ey + es); ctx.moveTo(cx + es, ey - es); ctx.lineTo(cx - es, ey + es); ctx.stroke();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.ellipse(cx, ey - r * 0.02, r * 0.15, r * 0.18, 0, 0, Math.PI * 2); ctx.fill();
+        ctx.lineWidth = Math.max(1, r * 0.035); ctx.stroke();
+        ctx.fillStyle = ink;
+        ctx.beginPath(); ctx.arc(cx + look * r * 0.03, ey - r * 0.02, Math.max(1.1, r * 0.045), 0, Math.PI * 2); ctx.fill();
       });
+      ctx.lineWidth = Math.max(1.2, r * 0.07);
     } else if (api.held) {
       [-1, 1].forEach(function (s) {
         var cx = x + s * ex, w = es * 1.3;
@@ -102,7 +124,27 @@
       ctx.fillStyle = ink;
     }
     var my = y + r * 0.26;
-    if (api.dead) { ctx.beginPath(); ctx.arc(x, my + r * 0.08, r * 0.1, Math.PI, 0); ctx.stroke(); }
+    if (api.dead) {
+      // 물결 입
+      ctx.beginPath(); ctx.moveTo(x - r * 0.16, my + r * 0.04);
+      for (var k = 1; k <= 4; k++) ctx.quadraticCurveTo(x - r * 0.16 + (k - 0.5) * r * 0.08, my + (k % 2 ? -1 : 1) * r * 0.05 + r * 0.04, x - r * 0.16 + k * r * 0.08, my + r * 0.04);
+      ctx.lineWidth = Math.max(1, r * 0.05); ctx.stroke();
+    }
+    else if (mood === 'joy') {
+      // 크게 벌린 웃음 + 혀
+      ctx.beginPath(); ctx.moveTo(x - r * 0.17, my - r * 0.04); ctx.quadraticCurveTo(x, my + r * 0.3, x + r * 0.17, my - r * 0.04); ctx.closePath(); ctx.fill();
+      ctx.save(); ctx.clip(); ctx.fillStyle = '#ff6f86'; ctx.beginPath(); ctx.ellipse(x, my + r * 0.12, r * 0.09, r * 0.06, 0, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+    }
+    else if (mood === 'scared' && !api.held) { ctx.beginPath(); ctx.ellipse(x, my + r * 0.02, r * 0.06, r * 0.09, 0, 0, Math.PI * 2); ctx.fill(); }
+    else if (mood === 'strain' && api.held && r > 10) {
+      // 이를 악문 입
+      var tw = r * 0.2, th = r * 0.09;
+      ctx.fillStyle = '#ffffff'; ctx.beginPath(); ctx.rect(x - tw, my - th, tw * 2, th * 2); ctx.fill();
+      ctx.lineWidth = Math.max(1, r * 0.04); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(x - tw, my); ctx.lineTo(x + tw, my);
+      for (var q = -1; q <= 1; q++) { ctx.moveTo(x + q * tw * 0.5, my - th); ctx.lineTo(x + q * tw * 0.5, my + th); }
+      ctx.stroke(); ctx.fillStyle = ink;
+    }
     else if (opts.mouth === 'pucker') { ctx.lineWidth = Math.max(1, r * 0.055); ctx.beginPath(); ctx.ellipse(x, my, r * (api.held ? 0.05 : 0.07), r * (api.held ? 0.05 : 0.08), 0, 0, Math.PI * 2); ctx.stroke(); }
     else if (api.held) { ctx.beginPath(); ctx.moveTo(x - r * 0.1, my); ctx.quadraticCurveTo(x, my - r * 0.05, x + r * 0.1, my); ctx.stroke(); }
     else if (api.expanded) { ctx.beginPath(); ctx.ellipse(x, my, r * 0.08, r * 0.1, 0, 0, Math.PI * 2); ctx.fill(); }
