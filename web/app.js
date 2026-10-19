@@ -13,6 +13,7 @@
     meterHead: document.querySelector('.meter-head'),
     coach: $('coach'), coachDots: $('coach-dots'), coachTitle: $('coach-title'), coachHint: $('coach-hint'),
     pad: $('pad'), padLabel: $('pad-label'), note: $('note'),
+    heightBox: document.querySelector('.hud-height'),
     xpbar: $('xpbar'), xpfill: $('xpfill')
   };
 
@@ -79,7 +80,7 @@
     ui.card.innerHTML = html;
     ui.overlay.hidden = false;
     ui.card.querySelectorAll('[data-act]').forEach(function (el) {
-      el.addEventListener('click', function () { audio.unlock(); actions[el.getAttribute('data-act')](el); });
+      el.addEventListener('click', function () { audio.unlock(); audio.play('tap'); actions[el.getAttribute('data-act')](el); });
     });
     var first = ui.card.querySelector('.btn-primary, .mode-tile, .offer') || ui.card.querySelector('button');
     if (first) first.focus({ preventScroll: true });
@@ -183,7 +184,7 @@
     }
     showCard(
       (rec.isBest && rec.height > 0 ? '<div class="badge">' + S.newBest + '</div>' : '') +
-      '<div class="card-title">' + rec.height + '<small>m</small></div>' +
+      '<div class="card-title"><span class="count">' + rec.height + '</span><small>m</small></div>' +
       '<div class="card-sub">' + esc(S.reason[rec.reason] || S.reason.unknown) + '</div>' +
       '<div class="stat-row"><div class="stat">' + S.passedLabel + '<b>' + rec.passed + '</b></div>' +
         (rec.stats && rec.stats.nearMiss ? '<div class="stat">' + S.nearMissLabel + '<b>' + rec.stats.nearMiss + '</b></div>' : '') +
@@ -199,8 +200,37 @@
       '<div class="btn-row"><button type="button" class="btn-ghost" data-act="home">' + S.home + '</button>' +
       (rec.canShare ? '<button type="button" class="btn-ghost accent" data-act="share">' + S.challengeSend + '</button>'
         : '<button type="button" class="btn-ghost" data-act="skins">' + STAR + ' ' + S.skinsTitle + '</button>') + '</div>' +
-      '<div class="card-hint">' + S.retryHint + '<br><span class="mono">seed ' + rec.seed + ' · ' + rec.rulesVersion + '/' + rec.balanceVersion + '/' + rec.generatorVersion + '</span></div>',
+      '<div class="card-hint kbd-only">' + S.retryHint + '<br><span class="mono">seed ' + rec.seed + ' · ' + rec.rulesVersion + '/' + rec.balanceVersion + '/' + rec.generatorVersion + '</span></div>',
       menuActions);
+    // 처음 보여 줄 때만: 기록이 0부터 올라가고, 최고 기록이면 색종이(설정을 열었다 돌아올 때는 다시 하지 않음)
+    if (!rec.shown) {
+      rec.shown = true;
+      countUp(ui.card.querySelector('.count'), rec.height);
+      if (rec.isBest && rec.height > 0) confetti();
+    }
+  }
+
+  function countUp(el, to) {
+    if (!el || reduced() || to <= 0) return;
+    var t0 = performance.now(), dur = Math.min(900, 350 + to * 4);
+    (function step(now) {
+      var k = Math.min(1, (now - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = String(Math.round(to * e));
+      if (k < 1) requestAnimationFrame(step); else { el.classList.remove('land'); void el.offsetWidth; el.classList.add('land'); }
+    })(t0);
+  }
+  function confetti() {
+    if (reduced()) return;
+    var box = document.createElement('div'), cols = ['var(--gold)', 'var(--mint)', 'var(--body)', '#7c7cf0', '#ffffff'], html = '';
+    box.className = 'confetti'; box.setAttribute('aria-hidden', 'true');
+    for (var i = 0; i < 36; i++) {
+      html += '<i style="left:' + (Math.random() * 100).toFixed(1) + '%;background:' + cols[i % cols.length] +
+        ';--dx:' + ((Math.random() - 0.5) * 120).toFixed(0) + 'px;--r:' + ((Math.random() - 0.5) * 900).toFixed(0) + 'deg' +
+        ';animation-delay:' + (Math.random() * 0.35).toFixed(2) + 's;animation-duration:' + (1.6 + Math.random() * 1.1).toFixed(2) + 's"></i>';
+    }
+    box.innerHTML = html;
+    ui.stage.appendChild(box);
+    setTimeout(function () { box.remove(); }, 3400);
   }
 
   // ── 성장 모드: 레벨업 카드 ──
@@ -455,9 +485,8 @@
     ui.pause.setAttribute('aria-label', S.pause);
     ui.settings.setAttribute('aria-label', S.settings);
     ui.bestChip.title = S.bestScope;
-    document.querySelector('.brand-name').textContent = S.title;
     hudCache = {};
-    if (ctl.state === 'READY' || ctl.state === 'RESULT') ui.note.textContent = S.noteIdle;
+    if (ctl.state === 'READY' || ctl.state === 'RESULT') ui.note.textContent = idleNote();
     renderBestChip();
     renderCoach();
   }
@@ -494,6 +523,8 @@
   }
 
   ctl.on(function (ev) {
+    if (ev.type === 'start') { bestAtStart = ctl.best; celebrated = false; ui.heightBox.classList.remove('best'); }
+    if (ev.type === 'gatePassed') bump();
     if (ev.type === 'start' || ev.type === 'resume') {
       hideCard(); ui.pause.disabled = false;
       ui.note.textContent = S.notePlaying;
@@ -508,7 +539,6 @@
       ui.pause.disabled = true;
       ui.note.textContent = S.reason[ev.reason] || S.reason.unknown;
       renderBestChip();
-      shake();
     } else if (ev.type === 'result') {
       resultCard(ev.record);
     } else if (ev.type === 'tutorialStep') {
@@ -520,13 +550,12 @@
       renderCoach('retry');
       ui.coachHint.textContent = (S.reason[ev.reason] || S.reason.unknown) + ' ' + S.tutorial.retry;
       ui.coachHint.classList.add('warn');
-      shake();
     } else if (ev.type === 'tutorialComplete') {
       ui.pause.disabled = true; renderCoach(); tutorialDoneCard(ev.skipped);
-      ui.note.textContent = S.noteIdle;
+      ui.note.textContent = idleNote();
     } else if (ev.type === 'menu') {
       ui.pause.disabled = true; renderCoach(); readyCard();
-      ui.note.textContent = S.noteIdle;
+      ui.note.textContent = idleNote();
     } else if (ev.type === 'settings') {
       applySettings();
     } else if (ev.type === 'levelUp') {
@@ -537,16 +566,32 @@
     }
   });
 
-  function shake() {
+  // 높이 숫자가 통과할 때마다 톡 튄다. 흔들림·번쩍임은 캔버스 카메라가 맡는다(view.js)
+  function bump() {
     if (reduced()) return;
-    ui.stage.classList.remove('shake'); void ui.stage.offsetWidth; ui.stage.classList.add('shake');
+    ui.heightBox.classList.remove('bump'); void ui.heightBox.offsetWidth; ui.heightBox.classList.add('bump');
   }
+  // 판 도중 이 모드의 최고 기록을 넘는 순간 한 번 축하(대결·튜토리얼 제외)
+  var bestAtStart = 0, celebrated = false;
+  function checkBestCrossed() {
+    if (celebrated || ctl.state !== 'PLAYING' || bestAtStart <= 0 || ctl.mode === 'tutorial' || ctl.mode === 'versus') return;
+    if (K.Simulation.heightMeters(ctl.run, balance) <= bestAtStart) return;
+    celebrated = true;
+    view.celebrate(S.newBest);
+    audio.play('fanfare');
+    ui.heightBox.classList.add('best');
+  }
+
+  // 키보드 안내는 마우스·키보드 기기에서만(터치폰에서는 의미 없는 글자)
+  var coarse = root.matchMedia && root.matchMedia('(pointer: coarse)');
+  function idleNote() { return coarse && coarse.matches ? '' : S.noteIdle; }
+  document.body.classList.toggle('touch', !!(coarse && coarse.matches)); // 터치 기기: 키보드 안내·기술 정보 숨김
 
   // ── 입력 ──
   function bindPointer(el) {
     el.addEventListener('pointerdown', function (e) {
       audio.unlock();
-      var ok = ctl.pointerDown({ pointerId: e.pointerId, clientX: e.clientX, button: e.button, surfaceWidth: el.getBoundingClientRect().width });
+      var ok = ctl.pointerDown({ pointerId: e.pointerId, clientX: e.clientX, button: e.button, surfaceWidth: el === ui.canvas ? view.worldWidthCss() : el.getBoundingClientRect().width });
       if (ok) { e.preventDefault(); try { el.setPointerCapture(e.pointerId); } catch (err) { /* 포인터가 이미 사라짐 */ } }
     });
     el.addEventListener('pointermove', function (e) { if (ctl.pointerMove({ pointerId: e.pointerId, clientX: e.clientX })) e.preventDefault(); });
@@ -557,7 +602,6 @@
     el.addEventListener('contextmenu', function (e) { e.preventDefault(); });
   }
   bindPointer(ui.canvas);
-  bindPointer(ui.pad);
   ui.pause.addEventListener('click', function () { ctl.pause('button'); });
   ui.settings.addEventListener('click', function () {
     audio.unlock();
@@ -628,20 +672,22 @@
   resize();
 
   // ── 단일 루프 ──
-  var lastTone = null;
+  var lastTone = null, lastState = null;
   function frame(now) {
     ctl.frame(now);
     renderHud();
+    checkBestCrossed();
     view.render(ctl, now);
     // 배경 밝기에 맞춰 HUD 글자색 전환
     var tone = view.tone();
     if (tone !== lastTone) { lastTone = tone; ui.stage.classList.toggle('tone-dark', tone === 'dark'); ui.stage.classList.toggle('tone-light', tone !== 'dark'); }
+    if (ctl.state !== lastState) { lastState = ctl.state; ui.stage.classList.toggle('playing', ctl.state === 'PLAYING'); ui.stage.classList.toggle('menu', ctl.state === 'READY'); }
     requestAnimationFrame(frame);
   }
 
   applySettings();
   applyLanguage();
-  ui.note.textContent = S.noteIdle;
+  ui.note.textContent = idleNote();
   readyCard();
 
   // 도전장 링크(#c=...)로 열렸으면: 해독 → 직접 재계산으로 검증 → 도전장 화면. 처리 후 주소에서 지운다.
@@ -659,5 +705,5 @@
   requestAnimationFrame(frame);
 
   // 디버그/검증용 핸들(읽기 전용 용도)
-  root.KKUK.debug = { ctl: ctl, audio: audio };
+  root.KKUK.debug = { ctl: ctl, audio: audio, view: view };
 })(typeof globalThis !== 'undefined' ? globalThis : this);

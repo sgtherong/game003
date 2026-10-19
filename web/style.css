@@ -67,63 +67,37 @@ body {
 }
 button { font: inherit; color: inherit; touch-action: manipulation; }
 
+/* 화면 전체가 게임. 폰에서는 꽉 채우고, 넓은 화면에서는 세로 9:16 기기처럼 가운데에 둔다.
+   세로가 9:16보다 길면 남는 높이는 캐릭터 아래(지나온 길)와 위(HUD)로 간다 — 앞쪽 시야는 모든 기기에서 같다. */
 .app {
-  justify-content: center;
-  --stage-w: min(100%, calc((100dvh - 262px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 360 / 430));
+  --stage-h: 100dvh;
   width: 100%;
-  max-width: 440px;
-  min-height: 100dvh;
-  margin: 0 auto;
-  padding: max(14px, env(safe-area-inset-top)) 16px max(14px, env(safe-area-inset-bottom));
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
+  height: 100dvh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
-
-/* ── 상단 ── */
-.topbar { width: var(--stage-w); min-width: 288px; display: flex; align-items: center; justify-content: space-between; }
-.brand { display: flex; align-items: center; gap: 9px; }
-.brand-blob {
-  width: 26px; height: 26px; border-radius: 50%;
-  background: radial-gradient(circle at 34% 30%, var(--body-light), var(--body) 62%);
-  box-shadow: 0 4px 12px -4px var(--body);
-  position: relative;
-}
-.brand-blob::before, .brand-blob::after {
-  content: ""; position: absolute; top: 11px; width: 3px; height: 3px; border-radius: 50%; background: var(--wall-deep);
-}
-.brand-blob::before { left: 8px; } .brand-blob::after { right: 8px; }
-.brand-name { font-size: 22px; font-weight: 800; letter-spacing: -0.04em; }
-.best-chip {
-  display: flex; align-items: baseline; gap: 8px;
-  padding: 6px 12px; border-radius: 999px;
-  background: var(--panel); border: 1px solid var(--line);
-  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-}
-.best-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: 0.04em; }
-.best-value { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.best-value small { font-size: 11px; margin-left: 1px; color: var(--muted); font-weight: 600; }
-
-.top-right { display: flex; align-items: center; gap: 8px; }
-.icon-btn.small { width: 38px; height: 38px; }
-.icon-btn.small svg { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; }
-.icon-btn:focus-visible, .btn-primary:focus-visible, .btn-ghost:focus-visible, .pad:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
+.icon-btn:focus-visible, .btn-primary:focus-visible, .btn-ghost:focus-visible { outline: 2px solid var(--mint); outline-offset: 2px; }
 
 /* ── 게임 영역 ── */
 .stage {
   position: relative;
-  width: var(--stage-w);
-  min-width: 288px;
-  aspect-ratio: 360 / 430;
-  border-radius: var(--radius-stage);
+  width: max(min(100vw, calc(var(--stage-h) * 9 / 16), 520px), min(100vw, 300px));
+  height: var(--stage-h);
   overflow: hidden;
   background: linear-gradient(180deg, var(--bg-top), var(--bg-bottom));
-  box-shadow: var(--shadow);
-  outline: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
-  outline-offset: -1px;
   container-type: inline-size;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --hud-h: calc(var(--safe-t) + 66px);
 }
+/* 넓은 화면(PC·태블릿 가로): 기기 틀처럼 둥글게 띄운다 */
+@media (min-width: 640px) and (min-height: 600px) {
+  .app { --stage-h: calc(100dvh - 40px); }
+  body { background: radial-gradient(120% 90% at 50% 0%, var(--page-top), var(--page-bottom)) fixed; }
+  .stage { border-radius: var(--radius-stage); box-shadow: var(--shadow); outline: 1px solid color-mix(in srgb, var(--line) 70%, transparent); outline-offset: -1px; }
+}
+.world-anchor { position: absolute; left: 0; top: var(--hud-h); width: 0; height: 0; pointer-events: none; }
 .stage.shake { animation: shake 0.36s cubic-bezier(.36,.07,.19,.97); }
 @keyframes shake {
   15% { transform: translate(-5px, 2px); } 30% { transform: translate(5px, -2px); }
@@ -133,11 +107,27 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
 .hud {
-  position: absolute; top: 14px; left: 16px; right: 14px;
+  position: absolute; top: calc(var(--safe-t) + 12px); left: 16px; right: 12px;
   display: flex; justify-content: space-between; align-items: flex-start;
   pointer-events: none;
 }
-.hud-height { font-size: 34px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
+/* 메뉴 카드가 떠 있어도 설정·기록은 위에 보인다 */
+.top-right { position: relative; z-index: 5; display: flex; align-items: center; gap: 8px; pointer-events: auto; }
+.best-chip {
+  display: flex; align-items: baseline; gap: 6px;
+  height: 36px; padding: 0 12px; align-items: center; border-radius: 999px;
+  background: var(--panel); border: 1px solid var(--line);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.best-label { font-size: 10.5px; font-weight: 700; color: var(--muted); letter-spacing: 0.02em; white-space: nowrap; max-width: 118px; overflow: hidden; text-overflow: ellipsis; }
+.best-value { font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.best-value small { font-size: 11px; margin-left: 1px; color: var(--muted); font-weight: 600; }
+.top-right .icon-btn { width: 40px; height: 40px; }
+.icon-btn.gear svg { fill: none; stroke: var(--ink); stroke-width: 1.8; stroke-linejoin: round; }
+.icon-btn:disabled { display: none; }
+.hud-score { transition: opacity .25s ease; }
+.stage.menu .hud-score { opacity: 0; }
+.hud-height { font-size: 40px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; font-variant-numeric: tabular-nums; }
 .hud-height small { font-size: 15px; font-weight: 700; margin-left: 2px; color: var(--muted); letter-spacing: 0; }
 .hud-gates {
   display: inline-block; margin-top: 7px; padding: 2px 9px; border-radius: 999px;
@@ -155,12 +145,13 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 }
 .icon-btn svg { fill: var(--ink); }
 .icon-btn:active { transform: scale(.94); }
-.icon-btn:disabled { opacity: 0; pointer-events: none; }
 
 /* ── 오버레이 카드 ── */
 .overlay {
   position: absolute; inset: 0;
-  display: grid; place-items: center; padding: 22px;
+  z-index: 3;
+  display: grid; place-items: center;
+  padding: calc(var(--hud-h) + 4px) 18px calc(var(--safe-b) + 22px);
   background: color-mix(in srgb, var(--bg-top) 55%, transparent);
   backdrop-filter: blur(6px) saturate(1.1); -webkit-backdrop-filter: blur(6px) saturate(1.1);
   transition: opacity .22s ease;
@@ -210,6 +201,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .btn-primary:active { transform: scale(.98); }
 .card-hint { margin-top: 10px; font-size: 11.5px; color: var(--muted); }
 .card-hint .mono { font: 500 10px/1.6 ui-monospace, "Cascadia Mono", Consolas, monospace; opacity: .75; }
+body.touch .kbd-only { display: none; }
 .card-warn { margin: -6px 0 14px; font-size: 12px; color: var(--danger); }
 .stat-row { display: flex; justify-content: center; gap: 8px; margin: 2px 0 16px; }
 .stat { padding: 7px 12px; border-radius: 12px; background: color-mix(in srgb, var(--track) 55%, transparent); font-size: 12px; color: var(--muted); }
@@ -217,7 +209,7 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 
 /* ── 튜토리얼 안내 ── */
 .coach {
-  position: absolute; left: 14px; right: 14px; top: 86px;
+  position: absolute; left: 14px; right: 14px; top: calc(var(--hud-h) + 24px); z-index: 2;
   padding: 10px 14px 11px; border-radius: 16px;
   background: var(--panel); border: 1px solid var(--line);
   backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
@@ -271,12 +263,17 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .privacy summary { color: var(--ink); font-size: 12.5px; font-weight: 700; cursor: pointer; min-height: 24px; list-style-position: inside; }
 .privacy[open] summary { margin-bottom: 4px; }
 
-/* ── 에너지 ── */
-.meter-wrap { width: var(--stage-w); min-width: 288px; }
-.meter-head { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); font-weight: 600; margin: 0 2px 6px; }
+/* ── 하단 조작 안내(보여 주기만, 터치는 캔버스로) ── */
+.controls {
+  position: absolute; left: 16px; right: 16px; bottom: calc(var(--safe-b) + 14px); z-index: 1;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.meter-wrap { width: 100%; max-width: 300px; padding: 7px 12px 9px; border-radius: 16px; background: color-mix(in srgb, var(--panel-solid) 55%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); transition: opacity .25s ease; }
+.meter-head { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--muted); font-weight: 700; margin: 0 1px 5px; }
 .meter-head.warn { color: var(--danger); }
 .meter-pct { font-variant-numeric: tabular-nums; }
-.meter { position: relative; height: 8px; border-radius: 99px; background: var(--track); overflow: visible; }
+.meter { position: relative; height: 6px; border-radius: 99px; background: var(--track); overflow: visible; }
 .meter-fill { position: relative; }
 .meter-fill {
   height: 100%; width: 0; border-radius: 99px;
@@ -288,24 +285,29 @@ canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .meter-goal[hidden] { display: none; }
 .meter-mark { position: absolute; top: 0; bottom: 0; width: 2px; background: color-mix(in srgb, var(--panel-solid) 80%, transparent); }
 
-/* ── 조작 패드 ── */
 .pad {
-  width: var(--stage-w); min-width: 288px; min-height: 72px;
-  display: flex; align-items: center; justify-content: space-between; gap: 10px;
-  padding: 0 18px; border: 0; border-radius: 22px;
-  background: var(--ink); color: var(--panel-solid);
-  font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em;
-  box-shadow: 0 10px 26px -14px var(--ink), inset 0 1px 0 rgba(255,255,255,.08);
-  touch-action: none; -webkit-touch-callout: none; cursor: grab;
-  transition: transform .09s ease, background .15s ease, box-shadow .15s ease;
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+  min-height: 40px; padding: 0 16px; border: 0; border-radius: 99px;
+  background: color-mix(in srgb, var(--ink) 78%, transparent); color: var(--panel-solid);
+  font-size: 13.5px; font-weight: 700; letter-spacing: -0.01em;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  pointer-events: none;
+  transition: opacity .3s ease, transform .15s ease, background .15s ease;
 }
-.pad-chev { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .45; }
-.pad[aria-pressed="true"] {
-  background: var(--mint); color: var(--panel-solid); transform: translateY(2px) scale(.99);
-  box-shadow: 0 4px 14px -8px var(--mint), inset 0 2px 6px rgba(0,0,0,.14); cursor: grabbing;
-}
-.pad[aria-pressed="true"] .pad-chev { opacity: .9; }
-.note { margin: 0; min-height: 18px; font-size: 12px; color: var(--muted); text-align: center; }
+.pad-chev { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; opacity: .6; }
+.pad-chev:first-child { animation: nudge-l 1.6s ease-in-out infinite; }
+.pad-chev:last-child { animation: nudge-r 1.6s ease-in-out infinite; }
+@keyframes nudge-l { 50% { transform: translateX(-3px); } }
+@keyframes nudge-r { 50% { transform: translateX(3px); } }
+.pad[aria-pressed="true"] { background: color-mix(in srgb, var(--mint) 88%, transparent); transform: scale(.97); }
+.note { margin: 0; min-height: 16px; font-size: 11.5px; font-weight: 600; color: var(--muted); text-align: center; text-shadow: 0 1px 6px color-mix(in srgb, var(--panel-solid) 80%, transparent); }
+.note:empty { display: none; }
+/* 플레이 중에는 조작 안내를 걷어 내고 게이지만 옅게 남긴다(몸 둘레 링이 주 게이지) */
+.stage.playing .pad { opacity: 0; }
+.stage.playing .meter-wrap { opacity: .7; }
+.stage.playing .note { opacity: 0; }
+.stage.tone-dark .meter-wrap { background: rgba(10,14,34,.42); }
+.stage.tone-dark .meter-head, .stage.tone-dark .note { color: rgba(244,246,255,.82); text-shadow: none; }
 
 @container (max-width: 330px) {
   .card { padding: 16px 14px 14px; }
@@ -322,13 +324,14 @@ body.reduced .card, body.reduced .card-mascot, body.reduced .coach.retry { anima
   .card, .card-mascot, .stage.shake, .coach.retry { animation: none; }
 }
 @media (orientation: landscape) and (max-height: 520px) {
-  .app { --stage-w: min(100%, calc((100dvh - 150px) * 360 / 430)); gap: 8px; }
-  .topbar { display: none; }
-  .pad { min-height: 64px; }
+  .stage { --hud-h: 58px; }
+  .meter-wrap { display: none; }
 }
+body.reduced .pad-chev { animation: none; }
+@media (prefers-reduced-motion: reduce) { .pad-chev { animation: none; } }
 
 /* ── 성장 모드 ── */
-.xpbar { position: absolute; left: 0; right: 0; top: 0; height: 5px; background: color-mix(in srgb, var(--track) 70%, transparent); }
+.xpbar { position: absolute; left: 0; right: 0; top: var(--safe-t); height: 5px; z-index: 2; background: color-mix(in srgb, var(--track) 70%, transparent); }
 .xpbar[hidden] { display: none; }
 .xpbar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, color-mix(in srgb, var(--gold) 60%, var(--panel-solid)), var(--gold)); border-radius: 0 3px 3px 0; transition: width .15s ease; }
 .hud-gates .lv { color: var(--gold); font-weight: 800; margin-right: 4px; }
@@ -380,9 +383,24 @@ body.reduced .card, body.reduced .card-mascot, body.reduced .coach.retry { anima
 .stage.tone-dark .hud-height { color: #f4f6ff; text-shadow: 0 1px 8px rgba(0,0,0,.35); }
 .stage.tone-dark .hud-height small { color: rgba(244,246,255,.7); }
 .stage.tone-dark .hud-gates { background: rgba(10,14,34,.5); color: rgba(244,246,255,.88); }
-.hud-height { transition: color .6s ease; }
+.hud-height { transition: color .6s ease; transform-origin: 0 70%; }
+.hud-height.bump { animation: hud-bump .26s cubic-bezier(.3,1.6,.5,1); }
+@keyframes hud-bump { 40% { transform: scale(1.16); } }
+.stage .hud-height.best, .stage .hud-height.best small { color: var(--gold); }
+.card-title .count { display: inline-block; font-variant-numeric: tabular-nums; }
+.card-title .count.land { animation: hud-bump .3s cubic-bezier(.3,1.6,.5,1); }
+/* 최고 기록 색종이(결과 카드 위로 쏟아짐) */
+.confetti { position: absolute; inset: 0; z-index: 6; overflow: hidden; pointer-events: none; }
+.confetti i { position: absolute; top: -16px; width: 7px; height: 11px; border-radius: 2px; opacity: 0; animation: confetti-fall 2s cubic-bezier(.25,.6,.45,1) forwards; }
+@keyframes confetti-fall {
+  0% { opacity: 1; transform: translate(0, 0) rotate(0); }
+  85% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--dx), calc(var(--stage-h) * .9)) rotate(var(--r)); }
+}
+body.reduced .hud-height.bump, body.reduced .card-title .count.land { animation: none; }
+body.reduced .confetti { display: none; }
+@media (prefers-reduced-motion: reduce) { .hud-height.bump, .card-title .count.land { animation: none; } .confetti { display: none; } }
 .hud-gates { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); transition: background .6s ease, color .6s ease; }
-.stage { background: #fbe6d4; }
 
 /* ── 외형 ── */
 .star { width: 13px; height: 13px; fill: var(--gold); vertical-align: -2px; }

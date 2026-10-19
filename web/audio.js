@@ -80,7 +80,8 @@
       fanfare: function () { [660, 880, 1175].forEach(function (f, i) { tone(f, f, 0.14, 'sine', 0.06, i * 0.08); }); },
       tick: function () { tone(740, 740, 0.04, 'sine', 0.04); },
       go: function () { tone(990, 990, 0.06, 'sine', 0.05); },
-      soft: function () { tone(520, 420, 0.06, 'sine', 0.04); }
+      soft: function () { tone(520, 420, 0.06, 'sine', 0.04); },
+      tap: function () { tone(620, 500, 0.035, 'sine', 0.035); vibrate(6); }
     };
 
     function onEvent(ev) {
