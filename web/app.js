@@ -691,7 +691,7 @@
     if (K.Simulation.heightMeters(ctl.run, balance) <= bestAtStart) return;
     celebrated = true;
     view.celebrate(S.newBest);
-    audio.play('fanfare');
+    audio.sting('best');
     ui.heightBox.classList.add('best');
   }
 
@@ -754,7 +754,10 @@
     audio.setWind(ctl.state === 'PLAYING' && !tut ? 0.25 + sn * 0.75 : 0);
     // 배경음악: 플레이 중에는 속도에 따라 빨라지고, 멈춘 동안은 먹먹하게, 실패 순간에는 끊는다
     var st = ctl.state;
-    audio.setMusic(st === 'PLAYING' ? 'play' : st === 'DEAD' ? 'off' : st === 'READY' || st === 'RESULT' ? 'menu' : 'muffled', tut ? 0 : sn);
+    // 곡: 시작·결과 화면 → menu, 성장 → quest, 오늘의 도전 → daily, 튜토리얼 → dawn, 그 밖에는 높이 구간(100 m마다, 화면 하늘색과 같은 순서)
+    var track = st === 'READY' || st === 'RESULT' ? 'menu' : gs ? 'quest' : ctl.mode === 'daily' ? 'daily' : tut ? 'dawn'
+      : K.View.ZONES[Math.floor(K.Simulation.heightMeters(run, balance) / 100) % K.View.ZONES.length].id;
+    audio.setMusic(st === 'PLAYING' ? 'play' : st === 'DEAD' ? 'off' : st === 'READY' || st === 'RESULT' ? 'menu' : 'muffled', tut ? 0 : sn, track);
     if (hudCache.xpOn !== !!gs) { hudCache.xpOn = !!gs; ui.xpbar.hidden = !gs; }
     if (gs) { var xpw = Math.min(100, 100 * gs.xp / gs.xpToNext).toFixed(1) + '%'; if (hudCache.xpw !== xpw) { hudCache.xpw = xpw; ui.xpfill.style.width = xpw; } }
     var pct = Math.min(100, Math.floor(run.energy / ab.energy.failAt * 100)); // 한계 대비 비율(강철 폐면 한계 120%)
