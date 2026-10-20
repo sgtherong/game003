@@ -637,3 +637,8 @@ body.reduced .logo-svg .lw { animation: none; }
 .hud-height, .best-value, .card-title .count, .card-title small, .vs-score, .stat b, .coin-pill, .earned, .m-rew, .new { font-family: var(--font-num); }
 .hud-height, .card-title .count, .vs-score { letter-spacing: 0.01em; }
 .hud-height small, .card-title small { margin-left: 3px; }
+/* 카드 닫기(✕) 버튼: 작게, 제목 줄 오른쪽에. (1단계에서 상단 막대와 함께 지워졌던 작은 버튼 크기 복원) */
+.icon-btn.small { width: 34px; height: 34px; }
+.icon-btn.small svg { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
+.card-close { top: 10px; right: 10px; }
+.card.settings .card-title, .card.skins .card-title, .card.share .card-title { padding: 0 34px; }
