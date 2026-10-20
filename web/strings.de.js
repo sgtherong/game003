@@ -158,6 +158,8 @@
     language: 'Sprache',
     privacy: 'Datenschutz',
     privacyBody: 'Rekorde und Einstellungen bleiben nur im Browser dieses Geräts. Keine Konten, Werbung, Analyse oder Uploads.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Rangliste', rankMine: 'Meine Runden', rankFriends: 'Freunde', rankEmpty: 'Noch keine Runden. Leg los!', rankFriendsEmpty: 'Sende oder öffne Herausforderungen, um hier die Rekorde deiner Freunde zu sammeln', rankMe: 'Ich', rankPlace: 'Platz {n} meiner Runden', rankWin: 'S', rankLose: 'N', rankDraw: 'U',
     close: 'Schließen',
     on: 'An', off: 'Aus'
   };

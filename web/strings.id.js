@@ -158,6 +158,8 @@
     language: 'Bahasa',
     privacy: 'Privasi',
     privacyBody: 'Rekor dan pengaturan hanya disimpan di browser perangkat ini. Tanpa akun, iklan, analitik, atau unggahan ke server.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Peringkat', rankMine: 'Permainanku', rankFriends: 'Teman', rankEmpty: 'Belum ada permainan. Ayo main!', rankFriendsEmpty: 'Kirim atau buka tantangan untuk mengumpulkan rekor teman di sini', rankMe: 'Aku', rankPlace: 'Peringkat {n} permainanku', rankWin: 'M', rankLose: 'K', rankDraw: 'S',
     close: 'Tutup',
     on: 'Nyala', off: 'Mati'
   };

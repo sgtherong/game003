@@ -158,6 +158,8 @@
     language: '言語',
     privacy: 'プライバシー',
     privacyBody: '記録と設定はこの端末のブラウザにだけ保存されます。アカウント、広告、分析、サーバー送信はありません。',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'ランキング', rankMine: '自分の記録', rankFriends: 'フレンド', rankEmpty: 'まだ記録がありません。遊んでみよう！', rankFriendsEmpty: '挑戦状をやり取りすると、フレンドの記録がここに集まります', rankMe: '自分', rankPlace: '自己記録 {n}位', rankWin: '勝', rankLose: '負', rankDraw: '分',
     close: '閉じる',
     on: 'オン', off: 'オフ'
   };

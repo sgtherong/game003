@@ -158,6 +158,8 @@
     language: 'Język',
     privacy: 'Prywatność',
     privacyBody: 'Rekordy i ustawienia są zapisane tylko w przeglądarce tego urządzenia. Bez kont, reklam, analityki i wysyłania na serwery.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Ranking', rankMine: 'Moje gry', rankFriends: 'Znajomi', rankEmpty: 'Brak gier. Zagraj!', rankFriendsEmpty: 'Wysyłaj lub otwieraj wyzwania, aby zbierać tu rekordy znajomych', rankMe: 'Ja', rankPlace: 'Miejsce {n} w moich grach', rankWin: 'W', rankLose: 'P', rankDraw: 'R',
     close: 'Zamknij',
     on: 'Wł.', off: 'Wył.'
   };

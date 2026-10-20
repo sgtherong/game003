@@ -158,6 +158,8 @@
     language: '언어',
     privacy: '개인정보 안내',
     privacyBody: '기록과 설정은 이 기기의 브라우저에만 저장됩니다. 계정, 광고, 분석, 서버 전송은 없습니다.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: '순위', rankMine: '내 기록', rankFriends: '친구', rankEmpty: '아직 기록이 없어요. 한 판 해 보세요!', rankFriendsEmpty: '도전장을 주고받으면 친구 기록이 여기에 모여요', rankMe: '나', rankPlace: '내 기록 {n}위', rankWin: '승', rankLose: '패', rankDraw: '무',
     close: '닫기',
     on: '켜짐', off: '꺼짐'
   };

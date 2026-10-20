@@ -150,4 +150,44 @@ module.exports = function registerVersusTests(test) {
     assert.strictEqual(back.seed, p.seed);
     assert.strictEqual(Challenge.verify(back, balance).status, 'verified');
   });
+
+  test('순위: 모드별 상위 10판 저장·이번 판 순위, 버전이 바뀌면 옛 기록 제외, 손상 항목은 검증에서 버림', () => {
+    const p = Save.defaultProfile(), at = '2026-10-20T00:00:00.000Z';
+    const e = (h, pp, v) => ({ h, p: pp, at, m: 'touch', v: v || 'r1|x', s: 'base' });
+    assert.deepStrictEqual([e(50, 0), e(120, 1), e(80, 2), e(120, 3)].map(x => Save.addHistory(p, 'challenge', x)), [1, 1, 2, 1]);
+    for (let i = 0; i < 12; i++) Save.addHistory(p, 'challenge', e(20 + i, 0));
+    assert.strictEqual(Save.getHistory(p, 'challenge', 'r1|x').length, Save.HISTORY_MAX);
+    assert.strictEqual(Save.addHistory(p, 'challenge', e(1, 0)), 0, '10위 밖');
+    assert.strictEqual(Save.addHistory(p, 'versus', e(999, 0)), 0, '대결은 순위에 넣지 않음');
+    assert.strictEqual(Save.addHistory(p, 'challenge', e(5, 0, 'r1|y')), 1, '새 버전의 첫 판');
+    assert.strictEqual(Save.getHistory(p, 'challenge').length, 1, '옛 버전 기록은 버림');
+    const raw = JSON.parse(JSON.stringify(p));
+    raw.history.growth = [{ h: -1 }, e(30, 1)]; raw.history.weird = [e(1, 1)];
+    const v = Save.validateSave(raw);
+    assert.strictEqual(v.profile.history.growth.length, 1);
+    assert.ok(!('weird' in v.profile.history));
+    assert.ok(v.repaired.indexOf('history.growth') >= 0);
+  });
+
+  test('순위: 받은 도전장이 친구 기록으로 쌓이고(같은 이름은 하나로), 대결 결과가 붙고, 고친 링크는 빠짐', () => {
+    const a = makeCtl(null, 2024);
+    botRun(a, 'challenge', 120 * 30);
+    const pay = Object.assign(unlink(link(a.challengePayload())), { name: 'Mia' });
+    const b = makeCtl(Save.memoryStore(), 7);
+    assert.ok(b.acceptChallenge(pay, { status: 'unverified' }));
+    b.acceptChallenge(pay, { status: 'unverified' });
+    assert.strictEqual(b.friends().length, 1, '같은 이름은 하나');
+    b.acceptChallenge(Object.assign({}, pay, { name: 'Leo', height: 9999 }), { status: 'mismatch' });
+    assert.strictEqual(b.friends().length, 1, '고친 링크는 넣지 않음');
+    b.acceptChallenge(pay, { status: 'unverified' });
+    b.replaySource = () => ({ ops: [], axis: 0 });
+    b.start('versus'); let f = 0; while (b.state !== 'RESULT' && f++ < 60 * 400) frames(b, 1);
+    assert.strictEqual(b.friends()[0].r, 'lose');
+    assert.strictEqual(b.ranking('challenge').length, 0, '대결 판은 내 순위에 없음');
+    const r = botRun(b, 'challenge', 120 * 10);
+    assert.strictEqual(r.rank, 1);
+    assert.strictEqual(b.ranking('challenge').length, 1);
+    // 저장했다 다시 읽어도 유지
+    assert.ok(Save.validateSave(JSON.parse(JSON.stringify(b.profile))).profile.friends[0].n === 'Mia');
+  });
 };

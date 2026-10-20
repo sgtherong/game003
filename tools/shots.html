@@ -87,6 +87,19 @@
       driveUntil(w, function (c) { return c.run.distance > UPM * 128 && c.run.logicalHeld && c.run.energy > 0.3; }, 120 * 120);
       ctl.state = 'CHOOSING';
       doc.getElementById('overlay').hidden = true;
+    } else if (scene === 'ranking' || scene === 'ranking-friends') {
+      // 순위 화면(스토어 장면 목록에는 없음, 확인용): 몇 판의 기록과 받은 도전장 몇 개
+      var at = new Date().toISOString();
+      [[152, 18, 'galaxy'], [131, 15, 'base'], [118, 13, 'bee'], [96, 11, 'base'], [74, 8, 'panda'], [41, 4, 'base']].forEach(function (r, i) {
+        K.Save.addHistory(ctl.profile, 'challenge', { h: r[0], p: r[1], at: new Date(Date.now() - i * 86400000).toISOString(), m: i === 3 ? 'keyboard' : 'touch', v: 'r1|' + ctl.balanceVersion, s: r[2] });
+      });
+      [['Mia', 168, 'win'], ['Leo', 97, 'lose'], [lang === 'ko' ? '지수' : 'Sam', 140, '']].forEach(function (f) {
+        K.Save.addFriend(ctl.profile, { n: f[0], h: f[1], p: 10, at: at });
+        if (f[2]) K.Save.setFriendResult(ctl.profile, f[0], 120, f[2]);
+      });
+      ctl.profile.records['r1|' + ctl.balanceVersion + '|touch'] = { height: 152, passed: 18, achievedAt: at };
+      click('[data-act="ranking"]');
+      if (scene === 'ranking-friends') click('[data-act="tabFriends"]');
     }
     // menu: 시작 화면 그대로(미션·모드)
     document.title = 'ready';

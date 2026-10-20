@@ -158,6 +158,8 @@
     language: '语言',
     privacy: '隐私',
     privacyBody: '记录和设置只保存在本设备的浏览器中。没有账号、广告、分析，也不会上传到服务器。',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: '排行', rankMine: '我的记录', rankFriends: '好友', rankEmpty: '还没有记录，来玩一局吧！', rankFriendsEmpty: '互发挑战书后，好友的记录会汇集在这里', rankMe: '我', rankPlace: '我的第 {n} 名', rankWin: '胜', rankLose: '负', rankDraw: '平',
     close: '关闭',
     on: '开', off: '关'
   };

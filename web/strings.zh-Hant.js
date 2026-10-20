@@ -158,6 +158,8 @@
     language: '語言',
     privacy: '隱私',
     privacyBody: '紀錄和設定只儲存在這台裝置的瀏覽器中。沒有帳號、廣告、分析，也不會上傳到伺服器。',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: '排行', rankMine: '我的紀錄', rankFriends: '好友', rankEmpty: '還沒有紀錄，來玩一局吧！', rankFriendsEmpty: '互傳挑戰書後，好友的紀錄會匯集在這裡', rankMe: '我', rankPlace: '我的第 {n} 名', rankWin: '勝', rankLose: '負', rankDraw: '平',
     close: '關閉',
     on: '開', off: '關'
   };

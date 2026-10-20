@@ -642,3 +642,32 @@ body.reduced .logo-svg .lw { animation: none; }
 .icon-btn.small svg { fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linecap: round; }
 .card-close { top: 10px; right: 10px; }
 .card.settings .card-title, .card.skins .card-title, .card.share .card-title { padding: 0 34px; }
+
+/* ── 순위 ── */
+.trophy { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; vertical-align: -2px; }
+.card-title .trophy { width: 20px; height: 20px; color: var(--gold); vertical-align: -1px; }
+.card.ranking { position: relative; max-width: 330px; padding: 14px 12px 12px; }
+.card.ranking .card-title { font-size: 21px; padding: 0 34px; }
+.rk-tabs { margin: 8px auto 8px; width: fit-content; }
+.rk-modes { display: flex; justify-content: center; gap: 6px; margin-bottom: 8px; }
+.rk-mode { min-height: 30px; padding: 0 12px; border-radius: 99px; border: 1px solid var(--line); background: transparent; font-size: 12.5px; font-weight: 700; color: var(--muted); cursor: pointer; }
+.rk-mode.on { background: var(--ink); color: var(--panel-solid); border-color: var(--ink); }
+.rk-list { list-style: none; margin: 0; padding: 0; text-align: left; }
+.rk-row { display: flex; align-items: center; gap: 10px; min-height: 46px; padding: 4px 8px; border-radius: 12px; }
+.rk-row + .rk-row { margin-top: 2px; }
+.rk-row:nth-child(odd) { background: color-mix(in srgb, var(--track) 40%, transparent); }
+.rk-row.new, .rk-row.me { background: color-mix(in srgb, var(--mint) 16%, var(--panel-solid)); outline: 1.5px solid var(--mint); }
+.rk-no { flex: none; width: 26px; height: 26px; display: grid; place-items: center; border-radius: 50%; font: 800 13px var(--font-num); color: var(--muted); }
+.rk-no.m1 { background: #ffd45c; color: #6a4700; } .rk-no.m2 { background: #d9dee6; color: #3d4652; } .rk-no.m3 { background: #f0b98a; color: #6a3a10; }
+.rk-skin { flex: none; width: 28px; height: 28px; }
+.rk-h { margin-left: auto; font: 800 19px var(--font-num); letter-spacing: 0.01em; font-variant-numeric: tabular-nums; }
+.rk-h small { font-size: 11px; color: var(--muted); margin-left: 2px; }
+.rk-meta { order: 3; flex: none; min-width: 52px; text-align: right; font-size: 11px; line-height: 1.35; color: var(--muted); font-variant-numeric: tabular-nums; }
+.rk-name { min-width: 0; flex: 1; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-res { flex: none; min-width: 22px; padding: 1px 6px; border-radius: 99px; font-size: 11px; font-weight: 800; text-align: center; }
+.rk-res.win { background: var(--gold); color: #2a1d00; } .rk-res.lose { background: var(--track); color: var(--muted); } .rk-res.draw { background: #c9c9ff; color: #2b2b7a; }
+.kbd-ic { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; vertical-align: -2px; }
+.rk-empty { margin: 18px 6px 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.rank-chip { border: 0; cursor: pointer; color: color-mix(in srgb, var(--gold) 70%, var(--ink)); font-weight: 800; background: var(--gold-soft); }
+.rank-chip .trophy { vertical-align: -3px; }
+:lang(ko) .rk-empty { word-break: keep-all; }

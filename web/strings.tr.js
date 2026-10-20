@@ -158,6 +158,8 @@
     language: 'Dil',
     privacy: 'Gizlilik',
     privacyBody: 'Rekorlar ve ayarlar yalnızca bu cihazın tarayıcısında saklanır. Hesap, reklam, analiz veya sunucuya yükleme yok.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Sıralama', rankMine: 'Oyunlarım', rankFriends: 'Arkadaşlar', rankEmpty: 'Henüz oyun yok. Bir dene!', rankFriendsEmpty: 'Arkadaşlarının rekorlarını burada toplamak için meydan okuma gönder ya da aç', rankMe: 'Ben', rankPlace: 'Oyunlarımda {n}.', rankWin: 'G', rankLose: 'M', rankDraw: 'B',
     close: 'Kapat',
     on: 'Açık', off: 'Kapalı'
   };

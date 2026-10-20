@@ -158,6 +158,8 @@
     language: 'Language',
     privacy: 'Privacy',
     privacyBody: 'Records and settings are stored only in this device’s browser. No accounts, ads, analytics or server uploads.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Ranking', rankMine: 'My runs', rankFriends: 'Friends', rankEmpty: 'No runs yet. Give it a go!', rankFriendsEmpty: "Send or open challenges to collect your friends' records here", rankMe: 'Me', rankPlace: '#{n} of my runs', rankWin: 'W', rankLose: 'L', rankDraw: 'D',
     close: 'Close',
     on: 'On', off: 'Off'
   };

@@ -101,6 +101,7 @@
     home: function () { ctl.exitToMenu(); },
     settings: function () { settingsCard(); },
     share: function () { shareCard(); },
+    ranking: function () { rankingCard(); },
     rematch: function () { ctl.start('versus'); afterAction(); },
     accept: function () { ctl.start('versus'); afterAction(); },
     skins: function () { skinsCard(null); }
@@ -158,7 +159,7 @@
         '</div>' : '') +
       missionsPanel() +
       '<div class="btn-row home-foot"><button type="button" class="btn-ghost" data-act="skins">' + STAR + ' ' + S.skinsTitle + ' · ' + ctl.coins() + '</button>' +
-      '<button type="button" class="btn-ghost" data-act="settings">' + S.settings + '</button></div>',
+      '<button type="button" class="btn-ghost" data-act="ranking">' + TROPHY + ' ' + S.rankTitle + '</button></div>',
       menuActions, 'home');
   }
   function modeTiles() {
@@ -207,6 +208,7 @@
       '<div class="card-sub">' + esc(S.reason[rec.reason] || S.reason.unknown) + '</div>' +
       '<div class="stat-row"><div class="stat">' + S.passedLabel + '<b>' + rec.passed + '</b></div>' +
         (rec.stats && rec.stats.nearMiss ? '<div class="stat">' + S.nearMissLabel + '<b>' + rec.stats.nearMiss + '</b></div>' : '') +
+        (rec.rank > 0 && ctl.ranking(rec.playMode).length > 1 ? '<button type="button" class="stat rank-chip" data-act="ranking">' + TROPHY + ' ' + esc(S.rankPlace.replace('{n}', rec.rank)) + '</button>' : '') +
         '<div class="stat">' + modeLabel + ' ' + S.best + '<b>' + rec.best + ' m</b></div></div>' +
       (rec.missionsDone && rec.missionsDone.length ? '<div class="m-done">' + rec.missionsDone.map(function (d) {
         return '<div>✓ ' + esc(S.missions[d.id].replace('{n}', d.goal)) + ' <b>' + STAR + '+' + d.reward + '</b></div>'; }).join('') + '</div>' : '') +
@@ -467,6 +469,63 @@
       c.lineWidth = 12; c.strokeText(sub, 540, 1240); c.fillStyle = ink; c.globalAlpha = 0.85; c.fillText(sub, 540, 1240); c.globalAlpha = 1;
       return new Promise(function (res, rej) { cv.toBlob(function (b) { if (b) res(b); else rej(new Error('blob')); }, 'image/jpeg', 0.9); }); // JPEG: 메신저로 보내기 가볍게(PNG의 약 1/4)
     });
+  }
+
+  // ── 순위: 내 기록(모드별 상위 10판) · 친구(받은 도전장 기록 + 내 도전 최고) ── 기기 안에서만, 서버 없음
+  var TROPHY = '<svg class="trophy" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v4a5 5 0 0 1-10 0V4Z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 3.4M17 6h2.5a2.5 2.5 0 0 1-2.6 3.4M12 13v3M8.5 20h7M9.5 16.5h5l.6 3.5h-6.2Z"/></svg>';
+  var KEYS_ICON = '<svg class="kbd-ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M7 10h.01M11 10h.01M15 10h.01M8 14h8"/></svg>';
+  var rankState = { tab: 'mine', pm: 'challenge' };
+  function shortDate(iso) {
+    try { return new Date(iso).toLocaleDateString(ctl.profile.settings.language, { month: 'numeric', day: 'numeric' }); } catch (e) { return String(iso).slice(5, 10); }
+  }
+  function medal(i) { return '<span class="rk-no' + (i < 3 ? ' m' + (i + 1) : '') + '">' + (i + 1) + '</span>'; }
+  function rankingCard(tab, pm) {
+    var back = currentCard && currentCard.isRanking ? (rankingCard.back || readyCard) : (currentCard || readyCard);
+    rankingCard.back = back;
+    if (tab) rankState.tab = tab;
+    if (pm) rankState.pm = pm;
+    if (!ctl.hasGrowth()) rankState.pm = 'challenge';
+    var last = ctl.lastRecord, html = '';
+    html += '<div class="card-title">' + TROPHY + ' ' + S.rankTitle + '</div>' +
+      '<button type="button" class="icon-btn small card-close" data-act="close" aria-label="' + esc(S.close) + '"><svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' +
+      '<div class="seg rk-tabs" role="tablist"><button type="button" role="tab" data-act="tabMine" aria-pressed="' + (rankState.tab === 'mine') + '">' + S.rankMine + '</button>' +
+      '<button type="button" role="tab" data-act="tabFriends" aria-pressed="' + (rankState.tab === 'friends') + '">' + S.rankFriends + '</button></div>';
+    if (rankState.tab === 'mine') {
+      if (ctl.hasGrowth()) {
+        html += '<div class="rk-modes">' + [['challenge', S.modeChallenge], ['growth', S.modeGrowth], ['daily', S.modeDaily]].map(function (m) {
+          return '<button type="button" class="rk-mode' + (rankState.pm === m[0] ? ' on' : '') + '" data-act="mode" data-pm="' + m[0] + '" aria-pressed="' + (rankState.pm === m[0]) + '">' + m[1] + '</button>';
+        }).join('') + '</div>';
+      }
+      var list = ctl.ranking(rankState.pm);
+      var hi = last && last.playMode === rankState.pm && last.rank > 0 ? last.rank - 1 : -1;
+      if (!list.length) html += '<div class="rk-empty">' + S.rankEmpty + '</div>';
+      else html += '<ol class="rk-list">' + list.map(function (e, i) {
+        return '<li class="rk-row' + (i === hi ? ' new' : '') + '">' + medal(i) + '<canvas class="rk-skin" width="56" height="56" data-skin="' + esc(e.s) + '"></canvas>' +
+          '<span class="rk-h">' + e.h + '<small>m</small></span><span class="rk-meta">▲ ' + e.p + (e.m !== 'touch' ? ' ' + KEYS_ICON : '') + '<br>' + esc(shortDate(e.at)) + '</span></li>';
+      }).join('') + '</ol>';
+    } else {
+      var me = ctl.getBest(ctl.profile.lastInputMode || 'touch', 'challenge');
+      var rows = ctl.friends().map(function (f) { return { n: f.n || S.incomingFriend, h: f.h, r: f.r, me: false }; });
+      if (rows.length) rows.push({ n: S.rankMe + (ctl.nickname() ? ' · ' + ctl.nickname() : ''), h: me, r: '', me: true });
+      rows.sort(function (a, b) { return b.h - a.h || (a.me ? -1 : b.me ? 1 : 0); });
+      if (!rows.length) html += '<div class="rk-empty">' + S.rankFriendsEmpty + '</div>';
+      else html += '<ol class="rk-list">' + rows.map(function (f, i) {
+        var badge = f.r ? '<span class="rk-res ' + f.r + '">' + esc(S[f.r === 'win' ? 'rankWin' : f.r === 'lose' ? 'rankLose' : 'rankDraw']) + '</span>' : '';
+        return '<li class="rk-row' + (f.me ? ' me' : '') + '">' + medal(i) + '<span class="rk-name">' + esc(f.n) + '</span>' + badge +
+          '<span class="rk-h">' + f.h + '<small>m</small></span></li>';
+      }).join('') + '</ol>';
+    }
+    showCard(html, {
+      close: function () { back(); },
+      tabMine: function () { rankingCard('mine'); },
+      tabFriends: function () { rankingCard('friends'); },
+      mode: function (el) { rankingCard('mine', el.getAttribute('data-pm')); }
+    }, 'ranking');
+    currentCard = function () { rankingCard(); };
+    currentCard.isRanking = true;
+    // 외형 작은 그림(기록을 낸 외형)
+    ui.card.querySelectorAll('canvas.rk-skin').forEach(function (cv) { K.Skins.preview(cv, cv.getAttribute('data-skin'), { size: 28 }); });
+    var nw = ui.card.querySelector('.rk-row.new'); if (nw && nw.scrollIntoView) nw.scrollIntoView({ block: 'nearest' });
   }
 
   var incoming = null;

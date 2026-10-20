@@ -158,6 +158,8 @@
     language: 'Taal',
     privacy: 'Privacy',
     privacyBody: 'Records en instellingen staan alleen in de browser van dit apparaat. Geen accounts, advertenties, analyses of uploads.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Ranglijst', rankMine: 'Mijn potjes', rankFriends: 'Vrienden', rankEmpty: 'Nog geen potjes. Probeer het!', rankFriendsEmpty: 'Stuur of open uitdagingen om hier de records van je vrienden te verzamelen', rankMe: 'Ik', rankPlace: 'Nr. {n} van mijn potjes', rankWin: 'W', rankLose: 'V', rankDraw: 'G',
     close: 'Sluiten',
     on: 'Aan', off: 'Uit'
   };

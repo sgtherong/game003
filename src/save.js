@@ -43,7 +43,11 @@
       claimedRewardIds: [],
       missions: { active: [], done: 0, tiers: {} },
       daily: null, // { date, best: { height, passed } | null, attempts, bonusClaimed, replay | null }
-      nickname: ''  // 도전장에 표시할 이름(선택, 최대 12자)
+      nickname: '',  // 도전장에 표시할 이름(선택, 최대 12자)
+      // 순위(기기 안에서만): 모드별 상위 10판 { h, p, at, m: 입력 방식, v: 규칙|설정 버전, s: 외형 }
+      history: { challenge: [], growth: [], daily: [] },
+      // 받은 도전장의 친구 기록 { n: 이름, h, p, at, my: 그 코스에서 내 최고, r: ''|'win'|'lose'|'draw' } (최근 30명)
+      friends: []
     };
   }
 
@@ -146,7 +150,73 @@
       if (dy.replay && !out.daily.replay) repaired.push('daily.replay');
     } else if (dy != null) repaired.push('daily');
 
+    // 순위 기록: 알 수 없는 모드·형식은 버림, 모드별 최대 10개
+    if (raw.history && typeof raw.history === 'object' && !Array.isArray(raw.history)) {
+      HISTORY_MODES.forEach(function (pm) {
+        var list = raw.history[pm];
+        if (!Array.isArray(list)) { if (list !== undefined) repaired.push('history.' + pm); return; }
+        var ok = list.filter(validHistory).map(function (e) { return { h: e.h, p: e.p, at: e.at, m: e.m, v: e.v, s: e.s }; });
+        if (ok.length !== list.length) repaired.push('history.' + pm);
+        out.history[pm] = sortRuns(ok).slice(0, HISTORY_MAX);
+      });
+    } else if (raw.history !== undefined) repaired.push('history');
+    if (Array.isArray(raw.friends)) {
+      out.friends = raw.friends.filter(validFriend).map(function (f) { return { n: cleanText(f.n), h: f.h, p: f.p, at: f.at, my: f.my, r: f.r }; }).slice(0, FRIENDS_MAX);
+      if (out.friends.length !== raw.friends.length) repaired.push('friends');
+    } else if (raw.friends !== undefined) repaired.push('friends');
+
     return { profile: out, repaired: repaired };
+  }
+
+  // ── 순위(기기 안에서만) ──
+  var HISTORY_MODES = ['challenge', 'growth', 'daily'], HISTORY_MAX = 10, FRIENDS_MAX = 30;
+  function cleanText(s) { return Array.from(String(s).replace(/[\u0000-\u001f\u007f-\u009f\u200b-\u200f\u2028-\u202e\u2066-\u2069]/g, '').trim()).slice(0, 12).join(''); }
+  function isDate(s) { return typeof s === 'string' && s.length <= 40 && !isNaN(Date.parse(s)); }
+  function validHistory(e) {
+    return e && typeof e === 'object' && isInt(e.h, MAX_HEIGHT) && isInt(e.p, MAX_COUNT) && isDate(e.at) &&
+      INPUT_MODES.indexOf(e.m) >= 0 && typeof e.v === 'string' && e.v.length <= 40 && typeof e.s === 'string' && e.s.length <= 24;
+  }
+  function validFriend(f) {
+    return f && typeof f === 'object' && typeof f.n === 'string' && isInt(f.h, MAX_HEIGHT) && isInt(f.p, MAX_COUNT) && isDate(f.at) &&
+      isInt(f.my, MAX_HEIGHT) && ['', 'win', 'lose', 'draw'].indexOf(f.r) >= 0;
+  }
+  function sortRuns(list) { return list.slice().sort(function (a, b) { return b.h - a.h || b.p - a.p || (a.at < b.at ? -1 : a.at > b.at ? 1 : 0); }); }
+  // 판 하나를 넣고 이번 판의 순위(1~10, 밖이면 0)를 돌려준다. 버전(v)이 다른 옛 기록은 비교할 수 없어 버린다.
+  function addHistory(profile, playMode, entry) {
+    if (HISTORY_MODES.indexOf(playMode) < 0 || !validHistory(entry)) return 0;
+    if (!profile.history) profile.history = { challenge: [], growth: [], daily: [] };
+    var mine = { h: entry.h, p: entry.p, at: entry.at, m: entry.m, v: entry.v, s: entry.s };
+    var list = (profile.history[playMode] || []).filter(function (e) { return e.v === entry.v; });
+    list.push(mine);
+    list = sortRuns(list).slice(0, HISTORY_MAX);
+    profile.history[playMode] = list;
+    var i = list.indexOf(mine);
+    return i < 0 ? 0 : i + 1;
+  }
+  function getHistory(profile, playMode, v) {
+    return ((profile.history && profile.history[playMode]) || []).filter(function (e) { return !v || e.v === v; });
+  }
+  // 받은 도전장의 친구 기록: 같은 이름은 하나로(더 높은 기록 유지), 최근 30명
+  function addFriend(profile, f) {
+    if (!profile.friends) profile.friends = [];
+    var n = cleanText(f.n || ''), key = n.toLowerCase();
+    var prev = null;
+    profile.friends = profile.friends.filter(function (x) { if (x.n.toLowerCase() === key) { prev = x; return false; } return true; });
+    var e = { n: n, h: f.h, p: f.p, at: f.at, my: prev ? prev.my : 0, r: prev ? prev.r : '' };
+    if (prev && prev.h > f.h) { e.h = prev.h; e.p = prev.p; }
+    if (!validFriend(e)) { if (prev) profile.friends.unshift(prev); return null; }
+    profile.friends.unshift(e);
+    profile.friends = profile.friends.slice(0, FRIENDS_MAX);
+    return e;
+  }
+  // 그 친구 코스로 대결한 결과: 내 최고와 마지막 승패
+  function setFriendResult(profile, name, myHeight, result) {
+    var key = cleanText(name || '').toLowerCase();
+    var f = (profile.friends || []).filter(function (x) { return x.n.toLowerCase() === key; })[0];
+    if (!f) return null;
+    if (isInt(myHeight, MAX_HEIGHT) && myHeight > f.my) f.my = myHeight;
+    if (['win', 'lose', 'draw'].indexOf(result) >= 0) f.r = result;
+    return f;
   }
 
   function serializeSave(profile) { return JSON.stringify(profile); }
@@ -221,7 +291,7 @@
 
   return {
     SCHEMA_VERSION: SCHEMA_VERSION, LANGUAGES: LANGUAGES, pickLanguage: pickLanguage, PRIMARY_KEY: PRIMARY_KEY, BACKUP_KEY: BACKUP_KEY, INPUT_MODES: INPUT_MODES,
-    defaultProfile: defaultProfile, recordKey: recordKey, registerCosmetics: registerCosmetics, registerMissions: registerMissions, validateSave: validateSave, serializeSave: serializeSave,
+    defaultProfile: defaultProfile, recordKey: recordKey, addHistory: addHistory, getHistory: getHistory, addFriend: addFriend, setFriendResult: setFriendResult, HISTORY_MAX: HISTORY_MAX, registerCosmetics: registerCosmetics, registerMissions: registerMissions, validateSave: validateSave, serializeSave: serializeSave,
     load: load, save: save, getRecord: getRecord, applyRunResult: applyRunResult, memoryStore: memoryStore
   };
 });

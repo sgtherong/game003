@@ -201,6 +201,8 @@
       if (!r1 || !payload || (check && check.status === 'version')) return false;
       ctl.versus = { seed: payload.seed >>> 0, name: payload.name, height: payload.height, passed: payload.passed, skin: payload.skin,
         replay: check && check.status === 'verified' ? payload.replay : null, ticks: payload.ticks, status: check ? check.status : 'unverified' };
+      // 친구 순위: 고친 흔적이 있는 링크(mismatch)는 넣지 않는다
+      if (!check || check.status !== 'mismatch') { Save.addFriend(ctl.profile, { n: payload.name || '', h: payload.height, p: payload.passed, at: nowIso() }); ctl.saveProfile(); }
       return true;
     };
     function versusGhost() {
@@ -209,6 +211,12 @@
       return { run: Simulation.createRun({ balance: balance, seed: v.seed, rulesVersion: rules, runId: 'ghost' }),
         player: Replay.createPlayer({ v: 1, seed: v.seed, ticks: v.ticks, data: v.replay }), best: { height: v.height, passed: v.passed }, label: v.name };
     }
+    // 순위 화면용: 모드별 내 상위 10판(지금 규칙·설정 버전만), 친구 기록
+    ctl.ranking = function (playMode) {
+      var rr = playMode === 'daily' ? rules + '-daily' : recordRules(playMode);
+      return Save.getHistory(ctl.profile, playMode, rr + '|' + balanceVersion);
+    };
+    ctl.friends = function () { return (ctl.profile.friends || []).slice(); };
     ctl.nickname = function () { return ctl.profile.nickname || ''; };
     ctl.setNickname = function (name) {
       var next = JSON.parse(JSON.stringify(ctl.profile)); next.nickname = name;
@@ -350,6 +358,7 @@
         ctl.lastReplay = ctl.recorder ? ctl.recorder.finish(run.tick) : null;
         if (ctl.mode === 'versus') {
           outcome = { isBest: false, record: null };
+          Save.setFriendResult(ctl.profile, ctl.versus.name || '', height, Challenge.compare({ height: height, passed: run.passedCount }, ctl.versus));
         } else if (ctl.mode === 'daily') {
           var ds = dailyState();
           ds.attempts++;
@@ -362,6 +371,9 @@
         } else {
           outcome = Save.applyRunResult(ctl.profile, { rulesVersion: rr, balanceVersion: balanceVersion, inputMode: mode, height: height, passed: run.passedCount }, nowIso());
         }
+        // 순위(모드별 상위 10판): 이번 판이 몇 위인지
+        var rank = ctl.mode === 'versus' ? 0 : Save.addHistory(ctl.profile, ctl.mode, { h: height, p: run.passedCount, at: nowIso(), m: mode,
+          v: rr + '|' + balanceVersion, s: ctl.equippedSkin ? ctl.equippedSkin() : 'base' });
         reward = runReward(run.passedCount);
         ctl.profile.softCurrency += reward;
         var st = ctl.feats ? ctl.feats.stats : {};
@@ -382,7 +394,8 @@
         dailyBonus: dailyBonus, daily: ctl.mode === 'daily' ? ctl.dailyInfo() : null,
         versus: ctl.mode === 'versus' ? { name: ctl.versus.name, height: ctl.versus.height, passed: ctl.versus.passed, status: ctl.versus.status,
           result: Challenge.compare({ height: height, passed: run.passedCount }, ctl.versus) } : null,
-        canShare: ctl.mode !== 'growth' && !!ctl.lastReplay
+        canShare: ctl.mode !== 'growth' && !!ctl.lastReplay,
+        rank: typeof rank === 'number' ? rank : 0
       };
       input.reset();
       ctl.state = 'DEAD';

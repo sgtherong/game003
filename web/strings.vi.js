@@ -158,6 +158,8 @@
     language: 'Ngôn ngữ',
     privacy: 'Quyền riêng tư',
     privacyBody: 'Kỷ lục và cài đặt chỉ lưu trong trình duyệt của thiết bị này. Không tài khoản, quảng cáo, phân tích hay tải lên máy chủ.',
+    // 순위(기기 안 기록·친구 기록)
+    rankTitle: 'Xếp hạng', rankMine: 'Lượt của tôi', rankFriends: 'Bạn bè', rankEmpty: 'Chưa có lượt nào. Chơi thử nhé!', rankFriendsEmpty: 'Gửi hoặc mở lời thách đấu để gom kỷ lục của bạn bè tại đây', rankMe: 'Tôi', rankPlace: 'Hạng {n} của tôi', rankWin: 'T', rankLose: 'B', rankDraw: 'H',
     close: 'Đóng',
     on: 'Bật', off: 'Tắt'
   };
